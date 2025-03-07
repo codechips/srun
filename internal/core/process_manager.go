@@ -9,7 +9,7 @@ import (
 )
 
 type ProcessManager struct {
-    mu       sync.RWMutex
+    Mu       sync.RWMutex
     Jobs     map[string]*Job
     Store    Storage
     LogChan  chan LogMessage

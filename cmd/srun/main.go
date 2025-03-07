@@ -6,6 +6,13 @@ import (
     "srun/internal/core"
 )
 
+func setupRoutes(r *gin.Engine, pm *core.ProcessManager) {
+    // Example route setup
+    r.POST("/jobs", func(c *gin.Context) {
+        // Implementation here
+    })
+}
+
 func main() {
     store, err := core.NewSQLiteStorage("srun.db")
     if err != nil {
