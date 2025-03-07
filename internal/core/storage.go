@@ -3,15 +3,15 @@ package core
 import (
     "database/sql"
     "fmt"
-    
+
     _ "github.com/mattn/go-sqlite3"
 )
 
-type SRunStorage struct {
+type SQLiteStorage struct {
     db *sql.DB
 }
 
-func NewSRunStorage(dbPath string) (*SRunStorage, error) {
+func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
     db, err := sql.Open("sqlite3", dbPath)
     if err != nil {
         return nil, err
@@ -21,5 +21,5 @@ func NewSRunStorage(dbPath string) (*SRunStorage, error) {
         return nil, fmt.Errorf("migration failed: %w", err)
     }
 
-    return &SRunStorage{db: db}, nil
+    return &SQLiteStorage{db: db}, nil
 }

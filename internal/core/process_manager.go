@@ -10,9 +10,9 @@ import (
 
 type ProcessManager struct {
     mu       sync.RWMutex
-    jobs     map[string]*Job
-    store    Storage
-    logChan  chan LogMessage
+    Jobs     map[string]*Job
+    Store    Storage
+    LogChan  chan LogMessage
 }
 
 type Job struct {
