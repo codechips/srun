@@ -2,6 +2,8 @@ package core
 
 import (
     "database/sql"
+    "fmt"
+    
     _ "github.com/mattn/go-sqlite3"
 )
 
@@ -14,6 +16,10 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
     if err != nil {
         return nil, err
     }
-    
+
+    if err := migrate(db); err != nil {
+        return nil, fmt.Errorf("migration failed: %w", err)
+    }
+
     return &SQLiteStorage{db: db}, nil
 }
