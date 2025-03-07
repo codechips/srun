@@ -3,11 +3,11 @@ package main
 import (
     "log"
     "github.com/gin-gonic/gin"
-    "your-module/internal/core"
+    "srun/internal/core"
 )
 
 func main() {
-    store, err := core.NewSQLiteStorage("procman.db")
+    store, err := core.NewSQLiteStorage("srun.db")
     if err != nil {
         log.Fatal(err)
     }
