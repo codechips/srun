@@ -351,4 +351,6 @@ type Storage interface {
     GetJob(id string) (*Job, error)
     ListJobs() ([]*Job, error)
     RemoveJob(id string) error
+    BatchWriteLogs(logs []LogMessage) error
+    GetJobLogs(id string) ([]LogMessage, error)
 }
