@@ -18,7 +18,12 @@ type SQLiteStorage struct {
 }
 
 func (s *SQLiteStorage) CreateJob(job *Job) error {
-    fmt.Printf("Creating job in database: %s\n", job.ID)
+    fmt.Printf("Creating job in database: %s with status %s\n", job.ID, job.Status)
+    var stoppedAt interface{}
+    if !job.CompletedAt.IsZero() {
+        stoppedAt = job.CompletedAt
+    }
+    
     _, err := s.db.Exec(
         `INSERT INTO jobs (id, command, pid, status, created_at, stopped_at) 
          VALUES (?, ?, ?, ?, ?, ?)`,
@@ -27,7 +32,7 @@ func (s *SQLiteStorage) CreateJob(job *Job) error {
         job.PID,
         job.Status,
         job.StartedAt,
-        job.CompletedAt,  // Use the CompletedAt time instead of nil
+        stoppedAt,
     )
     if err != nil {
         return fmt.Errorf("failed to create job: %w", err)
