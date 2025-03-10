@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useJobs, useJobActions } from "@/hooks/use-jobs"
 import {
   Table,
   TableBody,
@@ -19,14 +19,6 @@ import {
 import { MoreVertical, Play, Square, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-interface Job {
-  id: string
-  pid: number
-  command: string
-  status: string
-  startedAt: string
-  completedAt?: string
-}
 
 function LoadingTable() {
   return (
@@ -60,60 +52,12 @@ function LoadingTable() {
 }
 
 export function JobList() {
-  const queryClient = useQueryClient()
-  const { data: jobs, isLoading } = useQuery<Job[]>({
-    queryKey: ['jobs'],
-    queryFn: async () => {
-      const response = await fetch('/api/jobs')
-      return response.json()
-    }
-  })
+  const { data: jobs, isLoading } = useJobs()
+  const { stopJob, restartJob, removeJob } = useJobActions()
 
-  const stopMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
-      if (!response.ok) throw new Error('Failed to stop job')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      toast.success('Job stopped successfully')
-    },
-    onError: (error) => {
-      toast.error(`Failed to stop job: ${error.message}`)
-    }
-  })
-
-  const restartMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/jobs/${id}/restart`, { method: 'POST' })
-      if (!response.ok) throw new Error('Failed to restart job')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      toast.success('Job restarted successfully')
-    },
-    onError: (error) => {
-      toast.error(`Failed to restart job: ${error.message}`)
-    }
-  })
-
-  const removeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
-      if (!response.ok) throw new Error('Failed to remove job')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      toast.success('Job removed successfully')
-    },
-    onError: (error) => {
-      toast.error(`Failed to remove job: ${error.message}`)
-    }
-  })
-
-  const handleStop = (id: string) => stopMutation.mutate(id)
-  const handleRestart = (id: string) => restartMutation.mutate(id)
-  const handleRemove = (id: string) => removeMutation.mutate(id)
+  const handleStop = (id: string) => stopJob(id)
+  const handleRestart = (id: string) => restartJob(id)
+  const handleRemove = (id: string) => removeJob(id)
 
   if (isLoading) {
     return <LoadingTable />
