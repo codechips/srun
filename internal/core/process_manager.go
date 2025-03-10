@@ -1,6 +1,7 @@
 package core
 
 import (
+    "bufio"
     "context"
     "os/exec"
     "sync"
