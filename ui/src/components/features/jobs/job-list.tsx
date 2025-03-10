@@ -87,6 +87,8 @@ export function JobList() {
           <JobRow
             key={job.id}
             job={job}
+            expanded={expandedJobId === job.id}
+            onExpand={setExpandedJobId}
             onStop={stopJob}
             onRestart={restartJob}
             onRemove={removeJob}

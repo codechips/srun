@@ -14,13 +14,14 @@ import { Job } from "@/hooks/use-jobs";
 
 interface JobRowProps {
   job: Job;
+  expanded: boolean;
+  onExpand: (id: string | null) => void;
   onStop: (id: string) => void;
   onRestart: (id: string) => void;
   onRemove: (id: string) => void;
 }
 
-export function JobRow({ job, onStop, onRestart, onRemove }: JobRowProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function JobRow({ job, expanded, onExpand, onStop, onRestart, onRemove }: JobRowProps) {
 
   return (
     <>
@@ -30,7 +31,7 @@ export function JobRow({ job, onStop, onRestart, onRemove }: JobRowProps) {
           if ((e.target as HTMLElement).closest('[role="menuitem"]')) {
             return;
           }
-          setIsExpanded(!isExpanded);
+          onExpand(expanded ? null : job.id);
         }}
       >
         <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
@@ -89,7 +90,7 @@ export function JobRow({ job, onStop, onRestart, onRemove }: JobRowProps) {
           </DropdownMenu>
         </TableCell>
       </TableRow>
-      {isExpanded && (
+      {expanded && (
         <TableRow>
           <TableCell colSpan={7} className="p-0 border-0">
             <div className="bg-muted/50">
