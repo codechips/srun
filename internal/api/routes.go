@@ -15,14 +15,14 @@ type CreateJobRequest struct {
 
 func SetupRoutes(r *gin.Engine, pm *core.ProcessManager) {
 	// Job management endpoints
-	r.POST("/jobs", createJobHandler(pm))
-	r.GET("/jobs", listJobsHandler(pm))
-	r.GET("/jobs/:id", getJobHandler(pm))
-	r.DELETE("/jobs/:id", stopJobHandler(pm))
-	r.POST("/jobs/:id/restart", restartJobHandler(pm))
+	r.POST("/api/jobs", createJobHandler(pm))
+	r.GET("/api/jobs", listJobsHandler(pm))
+	r.GET("/api/jobs/:id", getJobHandler(pm))
+	r.DELETE("/api/jobs/:id", stopJobHandler(pm))
+	r.POST("/api/jobs/:id/restart", restartJobHandler(pm))
 
 	// Log streaming endpoint
-	r.GET("/jobs/:id/logs", streamLogsHandler(pm))
+	r.GET("/api/jobs/:id/logs", streamLogsHandler(pm))
 }
 
 func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
