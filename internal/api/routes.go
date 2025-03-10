@@ -19,7 +19,8 @@ func SetupRoutes(r *gin.Engine, pm *core.ProcessManager) {
 	r.POST("/api/jobs", createJobHandler(pm))
 	r.GET("/api/jobs", listJobsHandler(pm))
 	r.GET("/api/jobs/:id", getJobHandler(pm))
-	r.DELETE("/api/jobs/:id", stopJobHandler(pm))
+	r.DELETE("/api/jobs/:id", removeJobHandler(pm))
+	r.POST("/api/jobs/:id/stop", stopJobHandler(pm))
 	r.POST("/api/jobs/:id/restart", restartJobHandler(pm))
 
 	// Log streaming endpoint

@@ -26,7 +26,7 @@ export function useJobActions() {
 
   const stopJob = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/jobs/${id}/stop`, { method: 'POST' })
       if (!response.ok) throw new Error('Failed to stop job')
     },
     onSuccess: () => {
