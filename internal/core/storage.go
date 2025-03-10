@@ -37,7 +37,7 @@ func (s *SQLiteStorage) CreateJob(job *Job) error {
 
 func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
     row := s.db.QueryRow(
-        `SELECT id, command, status, created_at 
+        `SELECT id, command, pid, status, created_at 
          FROM jobs 
          WHERE id = ?`,
         id,
@@ -46,6 +46,7 @@ func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
     var (
         jobID      string
         command    string
+        pid        int
         status     string
         createdAt  time.Time
     )
@@ -60,10 +61,11 @@ func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
     // Create a new Job struct with the retrieved data
     job := &Job{
         ID:        jobID,
+        Command:   command,
+        PID:       pid,
         Status:    status,
         StartedAt: createdAt,
         LogBuffer: ring.New(1000),
-        Command:   command, // Store command string directly
     }
 
     // Only create Cmd if job is not completed/stopped
@@ -86,7 +88,7 @@ func (s *SQLiteStorage) RemoveJob(id string) error {
 
 func (s *SQLiteStorage) ListJobs() ([]*Job, error) {
     rows, err := s.db.Query(
-        `SELECT id, command, status, created_at 
+        `SELECT id, command, pid, status, created_at 
          FROM jobs 
          ORDER BY created_at DESC`,
     )
@@ -100,16 +102,19 @@ func (s *SQLiteStorage) ListJobs() ([]*Job, error) {
         var (
             jobID      string
             command    string
+            pid        int
             status     string
             createdAt  time.Time
         )
 
-        if err := rows.Scan(&jobID, &command, &status, &createdAt); err != nil {
+        if err := rows.Scan(&jobID, &command, &pid, &status, &createdAt); err != nil {
             return nil, fmt.Errorf("failed to scan job row: %w", err)
         }
 
         job := &Job{
             ID:        jobID,
+            Command:   command,
+            PID:       pid,
             Status:    status,
             StartedAt: createdAt,
             LogBuffer: ring.New(1000),

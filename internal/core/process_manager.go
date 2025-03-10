@@ -58,6 +58,9 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
         return nil, fmt.Errorf("failed to start command: %w", err)
     }
 
+    // Set the PID
+    job.PID = cmd.Process.Pid
+
     // Store job in manager
     pm.Mu.Lock()
     pm.Jobs[job.ID] = job
@@ -343,6 +346,7 @@ type Job struct {
     ID        string
     Cmd       *exec.Cmd
     Command   string             // Store command string directly
+    PID       int               // Process ID
     Cancel    context.CancelFunc
     Status    string // running, stopped, completed
     StartedAt time.Time
