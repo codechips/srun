@@ -165,6 +165,11 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
         if err != nil {
             if ctx.Err() == context.DeadlineExceeded {
                 job.Status = "timeout"
+            } else if ctx.Err() == context.Canceled {
+                // Job was intentionally stopped, keep the "stopped" status
+                if job.Status != "stopped" {
+                    job.Status = "failed"
+                }
             } else {
                 // Check if the error contains an exit code
                 if exitErr, ok := err.(*exec.ExitError); ok {
