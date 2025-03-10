@@ -76,7 +76,7 @@ export function JobRow({ job, expanded, onExpand, onStop, onRestart, onRemove }:
               ) : (
                 <DropdownMenuItem onClick={() => onRestart(job.id)}>
                   <Play className="mr-2 h-4 w-4" />
-                  <span>Restart</span>
+                  <span>{job.status === "failed" ? "Try Again" : "Restart"}</span>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
