@@ -71,9 +71,12 @@ func getJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"id":         job.ID,
-			"status":     job.Status,
-			"started_at": job.StartedAt,
+			"id":          job.ID,
+			"command":     job.Command,
+			"status":      job.Status,
+			"pid":         job.PID,
+			"startedAt":   job.StartedAt.Format(time.RFC3339),
+			"completedAt": job.CompletedAt.Format(time.RFC3339),
 		})
 	}
 }
@@ -106,9 +109,12 @@ func restartJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"id":         job.ID,
-			"status":     job.Status,
-			"started_at": job.StartedAt,
+			"id":          job.ID,
+			"command":     job.Command,
+			"status":      job.Status,
+			"pid":         job.PID,
+			"startedAt":   job.StartedAt.Format(time.RFC3339),
+			"completedAt": job.CompletedAt.Format(time.RFC3339),
 		})
 	}
 }
@@ -201,10 +207,12 @@ func createJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 
 		// Return job information
 		c.JSON(http.StatusCreated, gin.H{
-			"id":         job.ID,
-			"command":    req.Command,
-			"status":     job.Status,
-			"started_at": job.StartedAt,
+			"id":          job.ID,
+			"command":     req.Command,
+			"status":      job.Status,
+			"pid":         job.PID,
+			"startedAt":   job.StartedAt.Format(time.RFC3339),
+			"completedAt": job.CompletedAt.Format(time.RFC3339),
 		})
 	}
 }
