@@ -18,8 +18,11 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
       cursorBlink: true,
       fontSize: 14,
       fontFamily: 'monospace',
+      convertEol: true,
       theme: {
-        background: '#1a1b1e'
+        background: '#1a1b1e',
+        foreground: '#e4e4e7',
+        cursor: '#a1a1aa'
       }
     })
     terminal.current.open(terminalRef.current)
@@ -37,7 +40,13 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
         terminal.current?.writeln(`\r\nError: ${data.error}`)
         return
       }
-      terminal.current?.writeln(data.text)
+      
+      // Handle carriage returns for progress updates
+      if (data.text.includes('\r') && !data.text.includes('\n')) {
+        terminal.current?.write('\r' + data.text)
+      } else {
+        terminal.current?.writeln(data.text)
+      }
     }
 
     ws.onerror = (error) => {

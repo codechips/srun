@@ -171,6 +171,10 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		}
 		defer ws.Close()
 
+		// Create a channel for this client
+		clientChan := make(chan core.LogMessage, 100)
+		defer close(clientChan)
+
 		// Get historical logs
 		logs, err := pm.Store.GetJobLogs(id)
 		if err != nil {
@@ -183,21 +187,23 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			if err := ws.WriteJSON(gin.H{
 				"text": log.RawText,
 				"time": log.Time.Format(time.RFC3339),
+				"styles": log.Styles,
+				"progress": log.Progress,
 			}); err != nil {
 				return
 			}
 		}
 
-		// If job is still running, stream new logs
+		// Subscribe to log channel if job is still running
 		if job.Status == "running" {
-			// Create channel for this client
-			clientChan := make(chan core.LogMessage, 10)
-
-			// Subscribe to log channel
 			go func() {
 				for msg := range pm.LogChan {
 					if msg.JobID == id {
-						clientChan <- msg
+						select {
+						case clientChan <- msg:
+						default:
+							// Drop message if channel is full
+						}
 					}
 				}
 			}()
@@ -209,11 +215,12 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 					if err := ws.WriteJSON(gin.H{
 						"text": msg.RawText,
 						"time": msg.Time.Format(time.RFC3339),
+						"styles": msg.Styles,
+						"progress": msg.Progress,
 					}); err != nil {
 						return
 					}
 				case <-c.Done():
-					close(clientChan)
 					return
 				}
 			}
