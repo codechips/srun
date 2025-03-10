@@ -59,8 +59,17 @@ function LoadingTable() {
             <TableCell>
               <Skeleton className="h-8 w-8 rounded-full ml-auto" />
             </TableCell>
-            </TableRow>
           </TableRow>
+            {expandedJobId === job.id && (
+              <TableRow>
+                <TableCell colSpan={7} className="p-0">
+                  <div className="p-4">
+                    <JobTerminal jobId={job.id} />
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </React.Fragment>
         ))}
       </TableBody>
     </Table>
