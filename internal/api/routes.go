@@ -146,7 +146,7 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 
 		// Send historical logs first
 		for _, log := range logs {
-			c.SSEvent("log", log)
+			c.SSEvent("log", log.RawText)
 		}
 		c.Writer.Flush()
 
@@ -168,7 +168,7 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			c.Stream(func(w io.Writer) bool {
 				select {
 				case msg := <-clientChan:
-					c.SSEvent("log", msg)
+					c.SSEvent("log", msg.RawText)
 					return true
 				case <-c.Done():
 					close(clientChan)
