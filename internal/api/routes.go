@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"srun/internal/core"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,10 +40,12 @@ func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		var response []gin.H
 		for _, job := range jobs {
 			response = append(response, gin.H{
-				"id":         job.ID,
-				"command":    job.Command,
-				"status":     job.Status,
-				"started_at": job.StartedAt,
+				"id":          job.ID,
+				"command":     job.Command,
+				"status":      job.Status,
+				"pid":         job.PID,
+				"startedAt":   job.StartedAt.Format(time.RFC3339),
+				"completedAt": job.CompletedAt.Format(time.RFC3339),
 			})
 		}
 
