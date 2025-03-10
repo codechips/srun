@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useJobs, useJobActions } from "@/hooks/use-jobs";
 import {
   Table,
@@ -59,16 +60,7 @@ function LoadingTable() {
               <Skeleton className="h-8 w-8 rounded-full ml-auto" />
             </TableCell>
             </TableRow>
-            {expandedJobId === job.id && (
-              <TableRow>
-                <TableCell colSpan={7} className="p-0">
-                  <div className="p-4">
-                    <JobTerminal jobId={job.id} />
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </>
+          </TableRow>
         ))}
       </TableBody>
     </Table>
@@ -107,7 +99,7 @@ export function JobList() {
       </TableHeader>
       <TableBody>
         {jobs?.map((job) => (
-          <>
+          <React.Fragment key={job.id}>
             <TableRow 
               key={job.id} 
               className="cursor-pointer hover:bg-muted/50"
