@@ -35,10 +35,14 @@ func Process(line string) ProcessedLine {
         Styles: make(map[int][]string),
     }
 
-    // Handle carriage returns (terminal line updates)
-    if idx := strings.LastIndex(line, "\r"); idx >= 0 {
-        // Take only the content after the last carriage return
-        line = line[idx+1:]
+    // Check for progress indicators first
+    if strings.Contains(line, "\r") {
+        // This might be a progress update
+        result.Progress = detectProgress(line)
+        // Keep the last line for display
+        if idx := strings.LastIndex(line, "\r"); idx >= 0 {
+            line = line[idx+1:]
+        }
     }
 
     var plainBuf bytes.Buffer
@@ -70,8 +74,10 @@ func Process(line string) ProcessedLine {
 
     result.Plain = plainBuf.String()
 
-    // Try to detect progress bar
-    result.Progress = detectProgress(result.Plain)
+    // If we haven't detected progress yet, try again with the plain text
+    if result.Progress == nil {
+        result.Progress = detectProgress(result.Plain)
+    }
 
     return result
 }
@@ -118,6 +124,21 @@ func detectProgress(text string) *ProgressInfo {
         regex   *regexp.Regexp
         extract func([]string) *ProgressInfo
     }{
+        // curl style: ###################################################################  100.0%
+        {
+            regexp.MustCompile(`([#-]*)[\s>]*\s*(\d+\.?\d*)%`),
+            func(matches []string) *ProgressInfo {
+                if len(matches) > 2 {
+                    var percentage float64
+                    fmt.Sscanf(matches[2], "%f", &percentage)
+                    return &ProgressInfo{
+                        Percentage: int(percentage),
+                        Text:      matches[0],
+                    }
+                }
+                return nil
+            },
+        },
         // pip style: 45% |████████████              | ETA:  00:01
         {
             regexp.MustCompile(`(\d+)%\s*\|[█▇▆▅▄▃▂▁ ]*\|`),
