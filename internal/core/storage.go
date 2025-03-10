@@ -27,7 +27,7 @@ func (s *SQLiteStorage) CreateJob(job *Job) error {
         job.PID,
         job.Status,
         job.StartedAt,
-        nil,  // stopped_at is initially null
+        job.CompletedAt,  // Use the CompletedAt time instead of nil
     )
     if err != nil {
         return fmt.Errorf("failed to create job: %w", err)
