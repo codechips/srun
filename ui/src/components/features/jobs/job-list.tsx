@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useJobs, useJobActions } from "@/hooks/use-jobs";
 import { JobRow } from "./job-row";
 import {
@@ -56,8 +57,13 @@ function LoadingTable() {
 }
 
 export function JobList() {
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const { data: jobs, isLoading } = useJobs();
   const { stopJob, restartJob, removeJob } = useJobActions();
+
+  const handleJobCreated = (jobId: string) => {
+    setExpandedJobId(jobId);
+  };
 
   if (isLoading) {
     return <LoadingTable />;
