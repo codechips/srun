@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ export function CreateJobDialog({ onJobCreated }: CreateJobDialogProps) {
   const [command, setCommand] = useState("");
   const [open, setOpen] = useState(false);
   const createJob = useCreateJob();
+  const queryClient = useQueryClient();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +30,9 @@ export function CreateJobDialog({ onJobCreated }: CreateJobDialogProps) {
         onJobCreated?.(data.id);
         setOpen(false);
         setCommand("");
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['jobs'] });
+        }, 1000);
       },
       onError: (error) => {
         toast.error(`Failed to create job: ${error.message}`);
