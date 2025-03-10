@@ -136,8 +136,6 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
                 JobID:     job.ID,
                 Text:      processed.Plain,
                 RawText:   processed.Raw,
-                Styles:    processed.Styles,
-                Progress:  processed.Progress,
                 Time:      time.Now(),
             }
 
