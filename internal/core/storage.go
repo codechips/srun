@@ -82,10 +82,20 @@ func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
 }
 
 func (s *SQLiteStorage) RemoveJob(id string) error {
-    _, err := s.db.Exec("DELETE FROM jobs WHERE id = ?", id)
+    result, err := s.db.Exec("DELETE FROM jobs WHERE id = ?", id)
     if err != nil {
         return fmt.Errorf("failed to remove job: %w", err)
     }
+    
+    // Check if any row was actually deleted
+    rows, err := result.RowsAffected()
+    if err != nil {
+        return fmt.Errorf("failed to get affected rows: %w", err)
+    }
+    if rows == 0 {
+        return fmt.Errorf("job not found: %s", id)
+    }
+    
     return nil
 }
 

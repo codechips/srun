@@ -27,6 +27,22 @@ func SetupRoutes(r *gin.Engine, pm *core.ProcessManager) {
 	r.GET("/api/jobs/:id/logs", streamLogsHandler(pm))
 }
 
+func removeJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if err := pm.RemoveJob(id); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to remove job: " + err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Job removed successfully",
+		})
+	}
+}
+
 func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		jobs, err := pm.ListJobs()
