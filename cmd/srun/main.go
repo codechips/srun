@@ -4,12 +4,10 @@ import (
 	"flag"
 	"log"
 	"os"
-	"strconv"
 	"srun/internal/api"
 	"srun/internal/core"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/pflag"
 )
 
 func main() {
@@ -25,18 +23,18 @@ func main() {
 	}
 
 	// Port configuration with flag and env var
-	var port int
-	flag.IntVar(&port, "port", 8080, "Port to listen on")
+	var port string
+	flag.StringVar(&port, "port", "", "Port to listen on")
 	flag.Parse()
-	
+
 	// Check environment variable if flag not set
-	if port == 8080 {
+	if port == "" {
 		if envPort := os.Getenv("SRUN_PORT"); envPort != "" {
-			port = int(envPort)
+			port = envPort
 		}
 	}
 
 	r := gin.Default()
 	api.SetupRoutes(r, pm)
-	r.Run(":" + strconv.Itoa(port))
+	r.Run(":" + port)
 }
