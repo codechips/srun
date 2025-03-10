@@ -232,6 +232,31 @@ func (pm *ProcessManager) GetJobLogs(id string) []string {
     return logs
 }
 
+func (pm *ProcessManager) RemoveJob(id string) error {
+    pm.Mu.Lock()
+    defer pm.Mu.Unlock()
+
+    job, exists := pm.Jobs[id]
+    if !exists {
+        return fmt.Errorf("job not found: %s", id)
+    }
+
+    // Stop the job if it's running
+    if job.Status == "running" {
+        job.Cancel()
+    }
+
+    // Remove from memory
+    delete(pm.Jobs, id)
+
+    // Remove from storage
+    if err := pm.Store.RemoveJob(id); err != nil {
+        return fmt.Errorf("failed to remove job from storage: %w", err)
+    }
+
+    return nil
+}
+
 func (pm *ProcessManager) Cleanup() {
     pm.Mu.Lock()
     defer pm.Mu.Unlock()
@@ -266,4 +291,5 @@ type Storage interface {
     CreateJob(job *Job) error
     GetJob(id string) (*Job, error)
     ListJobs() ([]*Job, error)
+    RemoveJob(id string) error
 }

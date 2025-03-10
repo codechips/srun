@@ -70,6 +70,14 @@ func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
     return job, nil
 }
 
+func (s *SQLiteStorage) RemoveJob(id string) error {
+    _, err := s.db.Exec("DELETE FROM jobs WHERE id = ?", id)
+    if err != nil {
+        return fmt.Errorf("failed to remove job: %w", err)
+    }
+    return nil
+}
+
 func (s *SQLiteStorage) ListJobs() ([]*Job, error) {
     rows, err := s.db.Query(
         `SELECT id, command, status, created_at 
