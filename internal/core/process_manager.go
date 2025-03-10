@@ -273,18 +273,11 @@ func (pm *ProcessManager) StopJob(id string) error {
     // Cancel the context and wait for process to finish
     job.Cancel()
     job.Status = "stopped"
+    job.CompletedAt = time.Now()
 
-    // Create new job record with stopped status
-    newJob := &Job{
-        ID:        uuid.New().String(),
-        Command:   job.Command,
-        Status:    job.Status,
-        StartedAt: job.StartedAt,
-        LogBuffer: job.LogBuffer,
-        Cmd:      job.Cmd,
-    }
-    if err := pm.Store.CreateJob(newJob); err != nil {
-        return fmt.Errorf("failed to create job status: %w", err)
+    // Update the existing job's status in the database
+    if err := pm.Store.UpdateJobStatus(job.ID, job.Status); err != nil {
+        return fmt.Errorf("failed to update job status: %w", err)
     }
 
     return nil
