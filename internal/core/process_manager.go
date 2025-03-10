@@ -13,10 +13,12 @@ import (
 )
 
 type ProcessManager struct {
-    Mu       sync.RWMutex
-    Jobs     map[string]*Job
-    Store    Storage
-    LogChan  chan LogMessage
+    Mu        sync.RWMutex
+    Jobs      map[string]*Job
+    Store     Storage
+    LogChan   chan LogMessage
+    logBuffer []LogMessage
+    logMu     sync.Mutex
 }
 
 func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job, error) {
@@ -74,7 +76,7 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
         scanner := bufio.NewScanner(stdout)
         for scanner.Scan() {
             processed := ansi.Process(scanner.Text())
-            pm.LogChan <- LogMessage{
+            msg := LogMessage{
                 JobID:     job.ID,
                 Text:      processed.Plain,
                 RawText:   processed.Raw,
@@ -82,8 +84,18 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
                 Progress:  processed.Progress,
                 Time:      time.Now(),
             }
-            job.LogBuffer.Value = processed.Raw  // Store raw version with ANSI codes
+            
+            // Store in ring buffer
+            job.LogBuffer.Value = processed.Raw
             job.LogBuffer = job.LogBuffer.Next()
+            
+            // Add to batch buffer
+            pm.logMu.Lock()
+            pm.logBuffer = append(pm.logBuffer, msg)
+            pm.logMu.Unlock()
+            
+            // Send to real-time channel
+            pm.LogChan <- msg
         }
     }()
 
@@ -134,10 +146,42 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
 }
 
 func NewProcessManager(store Storage) *ProcessManager {
-    return &ProcessManager{
-        Jobs:    make(map[string]*Job),
-        Store:   store,
-        LogChan: make(chan LogMessage, 100),
+    pm := &ProcessManager{
+        Jobs:      make(map[string]*Job),
+        Store:     store,
+        LogChan:   make(chan LogMessage, 100),
+        logBuffer: make([]LogMessage, 0, 1000),
+    }
+    pm.startLogWriter()
+    return pm
+}
+
+func (pm *ProcessManager) startLogWriter() {
+    ticker := time.NewTicker(5 * time.Second)
+    go func() {
+        for range ticker.C {
+            pm.flushLogs()
+        }
+    }()
+}
+
+func (pm *ProcessManager) flushLogs() {
+    pm.logMu.Lock()
+    if len(pm.logBuffer) == 0 {
+        pm.logMu.Unlock()
+        return
+    }
+    
+    // Copy buffer and clear it
+    logsToWrite := make([]LogMessage, len(pm.logBuffer))
+    copy(logsToWrite, pm.logBuffer)
+    pm.logBuffer = pm.logBuffer[:0]
+    pm.logMu.Unlock()
+
+    // Write to storage
+    if err := pm.Store.BatchWriteLogs(logsToWrite); err != nil {
+        fmt.Printf("Error writing logs: %v\n", err)
+        // Could add retry logic here
     }
 }
 
@@ -276,6 +320,9 @@ func (pm *ProcessManager) Cleanup() {
             job.Cancel()
         }
     }
+
+    // Flush remaining logs
+    pm.flushLogs()
 
     // Close log channel
     close(pm.LogChan)
