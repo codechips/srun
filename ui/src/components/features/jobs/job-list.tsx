@@ -82,14 +82,12 @@ export function JobList() {
             <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
             <TableCell>{job.pid}</TableCell>
             <TableCell>
-              <Badge 
-                variant={
-                  job.status === 'completed' ? 'success' :
-                  job.status === 'running' ? 'warning' :
-                  job.status === 'failed' ? 'destructive' : 
-                  'secondary'
-                }
-              >
+              <Badge className={
+                job.status === 'completed' ? 'bg-green-500 hover:bg-green-600' :
+                job.status === 'running' ? 'bg-yellow-500 hover:bg-yellow-600' :
+                job.status === 'failed' ? 'bg-red-500 hover:bg-red-600' :
+                'bg-secondary hover:bg-secondary/80'
+              }>
                 {job.status}
               </Badge>
             </TableCell>
