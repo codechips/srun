@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 type CreateJobRequest struct {
@@ -146,41 +147,48 @@ func restartJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 
 func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Upgrade to WebSocket connection
+		upgrader := websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true // Allow all origins in development
+			},
+		}
+		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upgrade connection"})
+			return
+		}
+		defer ws.Close()
+
 		id := c.Param("id")
 
 		// Check if job exists
 		job, err := pm.GetJob(id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to get job: " + err.Error(),
-			})
+			ws.WriteJSON(gin.H{"error": "Failed to get job: " + err.Error()})
 			return
 		}
 		if job == nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Job not found",
-			})
+			ws.WriteJSON(gin.H{"error": "Job not found"})
 			return
 		}
 
 		// Get historical logs
 		logs, err := pm.Store.GetJobLogs(id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to get logs: " + err.Error(),
-			})
+			ws.WriteJSON(gin.H{"error": "Failed to get logs: " + err.Error()})
 			return
 		}
 
-		// Set headers for plain text streaming
-		c.Header("Content-Type", "text/plain")
-		c.Header("X-Content-Type-Options", "nosniff")
-
 		// Send historical logs first
 		for _, log := range logs {
-			fmt.Fprintln(c.Writer, log.RawText)
+			if err := ws.WriteJSON(gin.H{
+				"text": log.RawText,
+				"time": log.Time.Format(time.RFC3339),
+			}); err != nil {
+				return
+			}
 		}
-		c.Writer.Flush()
 
 		// If job is still running, stream new logs
 		if job.Status == "running" {
@@ -197,16 +205,20 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			}()
 
 			// Stream logs until connection closes
-			c.Stream(func(w io.Writer) bool {
+			for {
 				select {
 				case msg := <-clientChan:
-					fmt.Fprintln(w, msg.RawText)
-					return true
+					if err := ws.WriteJSON(gin.H{
+						"text": msg.RawText,
+						"time": msg.Time.Format(time.RFC3339),
+					}); err != nil {
+						return
+					}
 				case <-c.Done():
 					close(clientChan)
-					return false
+					return
 				}
-			})
+			}
 		}
 	}
 }
