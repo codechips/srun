@@ -302,20 +302,19 @@ func (pm *ProcessManager) RemoveJob(id string) error {
     pm.Mu.Lock()
     defer pm.Mu.Unlock()
 
+    // Try to get the job from memory first
     job, exists := pm.Jobs[id]
-    if !exists {
-        return fmt.Errorf("job not found: %s", id)
-    }
-
-    // Stop the job if it's running
-    if job.Status == "running" {
+    if exists && job.Status == "running" {
+        // If job is running, cancel it
         job.Cancel()
+        // Wait a moment for the job to clean up
+        time.Sleep(100 * time.Millisecond)
     }
 
-    // Remove from memory
+    // Remove from memory if it exists
     delete(pm.Jobs, id)
 
-    // Remove from storage
+    // Remove from storage (this will cascade delete logs due to foreign key)
     if err := pm.Store.RemoveJob(id); err != nil {
         return fmt.Errorf("failed to remove job from storage: %w", err)
     }
