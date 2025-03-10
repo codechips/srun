@@ -41,7 +41,7 @@ export function CreateJobDialog() {
       <DialogTrigger asChild>
         <Button>New Job</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[850px]">
         <DialogHeader>
           <DialogTitle>Create New Job</DialogTitle>
         </DialogHeader>
