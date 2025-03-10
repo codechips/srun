@@ -2,17 +2,11 @@ package main
 
 import (
 	"log"
+	"srun/internal/api"
 	"srun/internal/core"
 
 	"github.com/gin-gonic/gin"
 )
-
-func setupRoutes(r *gin.Engine, pm *core.ProcessManager) {
-	// Example route setup
-	r.POST("/jobs", func(c *gin.Context) {
-		// Implementation here
-	})
-}
 
 func main() {
 	store, err := core.NewSQLiteStorage("srun.db")
@@ -27,6 +21,6 @@ func main() {
 	}
 
 	r := gin.Default()
-	setupRoutes(r, pm)
+	api.SetupRoutes(r, pm)
 	r.Run(":8080")
 }
