@@ -8,7 +8,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
           <div className="container max-w-7xl mx-auto flex h-14 items-center">
             <div className="mr-4 flex">
               <a className="mr-6 flex items-center space-x-2" href="/">
-                <span className="font-bold">srun</span>
+                <span className="app-title text-xl">srun</span>
               </a>
             </div>
           </div>

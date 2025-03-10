@@ -115,6 +115,10 @@
 }
 
 @layer base {
+    .app-title {
+        font-family: 'Faster One', system-ui;
+    }
+    
     * {
         @apply border-border outline-ring/50;
     }
