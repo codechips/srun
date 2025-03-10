@@ -82,7 +82,14 @@ export function JobList() {
             <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
             <TableCell>{job.pid}</TableCell>
             <TableCell>
-              <Badge variant={job.status === 'running' ? 'default' : 'secondary'}>
+              <Badge 
+                variant={
+                  job.status === 'completed' ? 'success' :
+                  job.status === 'running' ? 'warning' :
+                  job.status === 'failed' ? 'destructive' : 
+                  'secondary'
+                }
+              >
                 {job.status}
               </Badge>
             </TableCell>
