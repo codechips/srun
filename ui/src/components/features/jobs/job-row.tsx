@@ -24,7 +24,7 @@ export function JobRow({ job, onStop, onRestart, onRemove }: JobRowProps) {
 
   return (
     <>
-      <TableRow 
+      <TableRow
         className="cursor-pointer hover:bg-muted/50"
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('[role="menuitem"]')) {
@@ -92,7 +92,7 @@ export function JobRow({ job, onStop, onRestart, onRemove }: JobRowProps) {
       {isExpanded && (
         <TableRow>
           <TableCell colSpan={7} className="p-0 border-0">
-            <div className="p-4 bg-muted/50 rounded-lg m-2">
+            <div className="bg-muted/50">
               <JobTerminal jobId={job.id} />
             </div>
           </TableCell>
