@@ -138,15 +138,13 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			return
 		}
 
-		// Set headers for SSE
-		c.Header("Content-Type", "text/event-stream")
-		c.Header("Cache-Control", "no-cache")
-		c.Header("Connection", "keep-alive")
-		c.Header("Transfer-Encoding", "chunked")
+		// Set headers for plain text streaming
+		c.Header("Content-Type", "text/plain")
+		c.Header("X-Content-Type-Options", "nosniff")
 
 		// Send historical logs first
 		for _, log := range logs {
-			c.SSEvent("log", log.RawText)
+			fmt.Fprintln(c.Writer, log.RawText)
 		}
 		c.Writer.Flush()
 
@@ -168,7 +166,7 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			c.Stream(func(w io.Writer) bool {
 				select {
 				case msg := <-clientChan:
-					c.SSEvent("log", msg.RawText)
+					fmt.Fprintln(w, msg.RawText)
 					return true
 				case <-c.Done():
 					close(clientChan)
