@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 	"github.com/google/uuid"
+	"srun/internal/ansi"
 )
 
 type ProcessManager struct {
@@ -72,12 +73,16 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
     go func() {
         scanner := bufio.NewScanner(stdout)
         for scanner.Scan() {
+            processed := ansi.Process(scanner.Text())
             pm.LogChan <- LogMessage{
-                JobID: job.ID,
-                Text:  scanner.Text(),
-                Time:  time.Now(),
+                JobID:     job.ID,
+                Text:      processed.Plain,
+                RawText:   processed.Raw,
+                Styles:    processed.Styles,
+                Progress:  processed.Progress,
+                Time:      time.Now(),
             }
-            job.LogBuffer.Value = scanner.Text()
+            job.LogBuffer.Value = processed.Raw  // Store raw version with ANSI codes
             job.LogBuffer = job.LogBuffer.Next()
         }
     }()
@@ -85,12 +90,16 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
     go func() {
         scanner := bufio.NewScanner(stderr)
         for scanner.Scan() {
+            processed := ansi.Process(scanner.Text())
             pm.LogChan <- LogMessage{
-                JobID: job.ID,
-                Text:  scanner.Text(),
-                Time:  time.Now(),
+                JobID:     job.ID,
+                Text:      processed.Plain,
+                RawText:   processed.Raw,
+                Styles:    processed.Styles,
+                Progress:  processed.Progress,
+                Time:      time.Now(),
             }
-            job.LogBuffer.Value = scanner.Text()
+            job.LogBuffer.Value = processed.Raw  // Store raw version with ANSI codes
             job.LogBuffer = job.LogBuffer.Next()
         }
     }()
@@ -282,9 +291,12 @@ type Job struct {
 }
 
 type LogMessage struct {
-    JobID string
-    Text  string
-    Time  time.Time
+    JobID     string
+    Text      string                // Plain text without ANSI codes
+    RawText   string                // Original text with ANSI codes
+    Styles    map[int][]string      // Style information
+    Progress  *ansi.ProgressInfo    // Progress information if detected
+    Time      time.Time
 }
 
 type Storage interface {
