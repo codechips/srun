@@ -145,6 +145,19 @@ func restartJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 
 func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Check if job exists first
+		job, err := pm.GetJob(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get job: " + err.Error()})
+			return
+		}
+		if job == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Job not found"})
+			return
+		}
+
 		// Upgrade to WebSocket connection
 		upgrader := websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -157,19 +170,6 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			return
 		}
 		defer ws.Close()
-
-		id := c.Param("id")
-
-		// Check if job exists
-		job, err := pm.GetJob(id)
-		if err != nil {
-			ws.WriteJSON(gin.H{"error": "Failed to get job: " + err.Error()})
-			return
-		}
-		if job == nil {
-			ws.WriteJSON(gin.H{"error": "Job not found"})
-			return
-		}
 
 		// Get historical logs
 		logs, err := pm.Store.GetJobLogs(id)
