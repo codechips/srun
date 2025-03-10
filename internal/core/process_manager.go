@@ -103,7 +103,7 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
         scanner := bufio.NewScanner(stderr)
         for scanner.Scan() {
             processed := ansi.Process(scanner.Text())
-            pm.LogChan <- LogMessage{
+            msg := LogMessage{
                 JobID:     job.ID,
                 Text:      processed.Plain,
                 RawText:   processed.Raw,
@@ -111,8 +111,18 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
                 Progress:  processed.Progress,
                 Time:      time.Now(),
             }
-            job.LogBuffer.Value = processed.Raw  // Store raw version with ANSI codes
+            
+            // Store in ring buffer
+            job.LogBuffer.Value = processed.Raw
             job.LogBuffer = job.LogBuffer.Next()
+            
+            // Add to batch buffer
+            pm.logMu.Lock()
+            pm.logBuffer = append(pm.logBuffer, msg)
+            pm.logMu.Unlock()
+            
+            // Send to real-time channel
+            pm.LogChan <- msg
         }
     }()
 
