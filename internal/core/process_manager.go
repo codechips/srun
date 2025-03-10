@@ -52,7 +52,20 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
 
     // Start the command
     if err := cmd.Start(); err != nil {
-        return nil, fmt.Errorf("failed to start command: %w", err)
+        // Update job status to failed since command couldn't even start
+        job.Status = "failed"
+        job.CompletedAt = time.Now()
+        
+        // Store the failed job
+        pm.Mu.Lock()
+        pm.Jobs[job.ID] = job
+        pm.Mu.Unlock()
+        
+        if err := pm.Store.CreateJob(job); err != nil {
+            return nil, fmt.Errorf("failed to create failed job: %w", err)
+        }
+        
+        return job, nil
     }
 
     // Set the PID
