@@ -14,44 +14,19 @@ type SQLiteStorage struct {
     db *sql.DB
 }
 
-func (s *SQLiteStorage) SaveJob(job *Job) error {
-    // First try to update existing job
-    result, err := s.db.Exec(
-        `UPDATE jobs 
-         SET status = ?, 
-             command = ?,
-             pid = ?
-         WHERE id = ?`,
-        job.Status,
+func (s *SQLiteStorage) CreateJob(job *Job) error {
+    _, err := s.db.Exec(
+        `INSERT INTO jobs (id, command, pid, status, created_at) 
+         VALUES (?, ?, ?, ?, ?)`,
+        job.ID,
         job.Cmd.Args[2], // Skip "sh" "-c" to get actual command
         job.Cmd.Process.Pid,
-        job.ID,
+        job.Status,
+        job.StartedAt,
     )
     if err != nil {
-        return fmt.Errorf("failed to update job: %w", err)
+        return fmt.Errorf("failed to create job: %w", err)
     }
-
-    rows, err := result.RowsAffected()
-    if err != nil {
-        return fmt.Errorf("failed to get rows affected: %w", err)
-    }
-
-    // If no rows were updated, insert new job
-    if rows == 0 {
-        _, err = s.db.Exec(
-            `INSERT INTO jobs (id, command, pid, status, created_at) 
-             VALUES (?, ?, ?, ?, ?)`,
-            job.ID,
-            job.Cmd.Args[2],
-            job.Cmd.Process.Pid,
-            job.Status,
-            job.StartedAt,
-        )
-        if err != nil {
-            return fmt.Errorf("failed to insert job: %w", err)
-        }
-    }
-
     return nil
 }
 

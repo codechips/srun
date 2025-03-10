@@ -60,12 +60,12 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
     pm.Jobs[job.ID] = job
     pm.Mu.Unlock()
 
-    // Save job to storage
-    if err := pm.Store.SaveJob(job); err != nil {
+    // Create job in storage
+    if err := pm.Store.CreateJob(job); err != nil {
         // Cleanup if storage fails
         job.Cancel()
         delete(pm.Jobs, job.ID)
-        return nil, fmt.Errorf("failed to save job: %w", err)
+        return nil, fmt.Errorf("failed to create job: %w", err)
     }
 
     // Handle command output in goroutines
@@ -110,8 +110,15 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
         }
         pm.Mu.Unlock()
         
-        // Update storage with final status
-        _ = pm.Store.SaveJob(job)
+        // Create new job record with final status
+        newJob := &Job{
+            ID:        uuid.New().String(),
+            Status:    job.Status,
+            StartedAt: job.StartedAt,
+            LogBuffer: job.LogBuffer,
+            Cmd:      job.Cmd,
+        }
+        _ = pm.Store.CreateJob(newJob)
     }()
 
     return job, nil
@@ -161,9 +168,16 @@ func (pm *ProcessManager) StopJob(id string) error {
     job.Cancel()
     job.Status = "stopped"
 
-    // Update storage
-    if err := pm.Store.SaveJob(job); err != nil {
-        return fmt.Errorf("failed to save job status: %w", err)
+    // Create new job record with stopped status
+    newJob := &Job{
+        ID:        uuid.New().String(),
+        Status:    job.Status,
+        StartedAt: job.StartedAt,
+        LogBuffer: job.LogBuffer,
+        Cmd:      job.Cmd,
+    }
+    if err := pm.Store.CreateJob(newJob); err != nil {
+        return fmt.Errorf("failed to create job status: %w", err)
     }
 
     return nil
@@ -249,7 +263,7 @@ type LogMessage struct {
 }
 
 type Storage interface {
-    SaveJob(job *Job) error
+    CreateJob(job *Job) error
     GetJob(id string) (*Job, error)
     ListJobs() ([]*Job, error)
 }
