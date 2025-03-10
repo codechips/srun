@@ -20,13 +20,14 @@ type SQLiteStorage struct {
 func (s *SQLiteStorage) CreateJob(job *Job) error {
     fmt.Printf("Creating job in database: %s\n", job.ID)
     _, err := s.db.Exec(
-        `INSERT INTO jobs (id, command, pid, status, created_at) 
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO jobs (id, command, pid, status, created_at, stopped_at) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
         job.ID,
-        job.Cmd.Args[2], // Skip "sh" "-c" to get actual command
-        job.Cmd.Process.Pid,
+        job.Command,
+        job.PID,
         job.Status,
         job.StartedAt,
+        nil,  // stopped_at is initially null
     )
     if err != nil {
         return fmt.Errorf("failed to create job: %w", err)
@@ -37,7 +38,7 @@ func (s *SQLiteStorage) CreateJob(job *Job) error {
 
 func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
     row := s.db.QueryRow(
-        `SELECT id, command, pid, status, created_at 
+        `SELECT id, command, pid, status, created_at, stopped_at 
          FROM jobs 
          WHERE id = ?`,
         id,
@@ -49,9 +50,10 @@ func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
         pid        int
         status     string
         createdAt  time.Time
+        stoppedAt  sql.NullTime
     )
 
-    if err := row.Scan(&jobID, &command, &status, &createdAt); err != nil {
+    if err := row.Scan(&jobID, &command, &pid, &status, &createdAt, &stoppedAt); err != nil {
         if err == sql.ErrNoRows {
             return nil, nil
         }
@@ -60,12 +62,13 @@ func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
 
     // Create a new Job struct with the retrieved data
     job := &Job{
-        ID:        jobID,
-        Command:   command,
-        PID:       pid,
-        Status:    status,
-        StartedAt: createdAt,
-        LogBuffer: ring.New(1000),
+        ID:          jobID,
+        Command:     command,
+        PID:         pid,
+        Status:      status,
+        StartedAt:   createdAt,
+        CompletedAt: stoppedAt.Time,
+        LogBuffer:   ring.New(1000),
     }
 
     // Only create Cmd if job is not completed/stopped
@@ -88,7 +91,7 @@ func (s *SQLiteStorage) RemoveJob(id string) error {
 
 func (s *SQLiteStorage) ListJobs() ([]*Job, error) {
     rows, err := s.db.Query(
-        `SELECT id, command, pid, status, created_at 
+        `SELECT id, command, pid, status, created_at, stopped_at 
          FROM jobs 
          ORDER BY created_at DESC`,
     )
@@ -105,19 +108,21 @@ func (s *SQLiteStorage) ListJobs() ([]*Job, error) {
             pid        int
             status     string
             createdAt  time.Time
+            stoppedAt  sql.NullTime
         )
 
-        if err := rows.Scan(&jobID, &command, &pid, &status, &createdAt); err != nil {
+        if err := rows.Scan(&jobID, &command, &pid, &status, &createdAt, &stoppedAt); err != nil {
             return nil, fmt.Errorf("failed to scan job row: %w", err)
         }
 
         job := &Job{
-            ID:        jobID,
-            Command:   command,
-            PID:       pid,
-            Status:    status,
-            StartedAt: createdAt,
-            LogBuffer: ring.New(1000),
+            ID:          jobID,
+            Command:     command,
+            PID:         pid,
+            Status:      status,
+            StartedAt:   createdAt,
+            CompletedAt: stoppedAt.Time,
+            LogBuffer:   ring.New(1000),
         }
 
         // Only create Cmd if job is not completed/stopped
