@@ -1,13 +1,12 @@
 package core
 
 import (
-    "bufio"
-    "context"
-    "fmt"
-    "os/exec"
-    "sync"
-    "time"
-    "container/ring"
+	"container/ring"
+	"context"
+	"fmt"
+	"os/exec"
+	"sync"
+	"time"
 )
 
 type ProcessManager struct {
@@ -28,7 +27,7 @@ func NewProcessManager(store Storage) *ProcessManager {
 func (pm *ProcessManager) GetJob(id string) (*Job, error) {
     pm.Mu.RLock()
     defer pm.Mu.RUnlock()
-    
+
     job, exists := pm.Jobs[id]
     if !exists {
         // Try loading from storage
@@ -40,7 +39,7 @@ func (pm *ProcessManager) GetJob(id string) (*Job, error) {
 func (pm *ProcessManager) ListJobs() ([]*Job, error) {
     pm.Mu.RLock()
     defer pm.Mu.RUnlock()
-    
+
     return pm.Store.ListJobs()
 }
 
@@ -60,7 +59,7 @@ func (pm *ProcessManager) StopJob(id string) error {
     // Cancel the context and wait for process to finish
     job.Cancel()
     job.Status = "stopped"
-    
+
     // Update storage
     if err := pm.Store.SaveJob(job); err != nil {
         return fmt.Errorf("failed to save job status: %w", err)
@@ -73,7 +72,7 @@ func (pm *ProcessManager) RestartJob(id string) (*Job, error) {
     pm.Mu.Lock()
     oldJob, exists := pm.Jobs[id]
     pm.Mu.Unlock()
-    
+
     if !exists {
         return nil, fmt.Errorf("job not found: %s", id)
     }
