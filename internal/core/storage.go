@@ -161,6 +161,21 @@ func (s *SQLiteStorage) BatchWriteLogs(logs []LogMessage) error {
     return nil
 }
 
+func (s *SQLiteStorage) UpdateJobStatus(id string, status string) error {
+    _, err := s.db.Exec(
+        `UPDATE jobs 
+         SET status = ?, 
+             stopped_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        status,
+        id,
+    )
+    if err != nil {
+        return fmt.Errorf("failed to update job status: %w", err)
+    }
+    return nil
+}
+
 func (s *SQLiteStorage) GetJobLogs(jobID string) ([]LogMessage, error) {
     rows, err := s.db.Query(`
         SELECT content, created_at 

@@ -131,15 +131,10 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
         }
         pm.Mu.Unlock()
         
-        // Create new job record with final status
-        newJob := &Job{
-            ID:        uuid.New().String(),
-            Status:    job.Status,
-            StartedAt: job.StartedAt,
-            LogBuffer: job.LogBuffer,
-            Cmd:      job.Cmd,
+        // Update existing job record with final status
+        if err := pm.Store.UpdateJobStatus(job.ID, job.Status); err != nil {
+            fmt.Printf("Failed to update job status: %v\n", err)
         }
-        _ = pm.Store.CreateJob(newJob)
     }()
 
     return job, nil
@@ -353,4 +348,5 @@ type Storage interface {
     RemoveJob(id string) error
     BatchWriteLogs(logs []LogMessage) error
     GetJobLogs(id string) ([]LogMessage, error)
+    UpdateJobStatus(id string, status string) error
 }
