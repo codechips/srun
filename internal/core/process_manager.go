@@ -144,6 +144,9 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
         }
         pm.Mu.Unlock()
         
+        // Flush any remaining logs before updating status
+        pm.flushLogs()
+        
         // Update existing job record with final status
         if err := pm.Store.UpdateJobStatus(job.ID, job.Status); err != nil {
             fmt.Printf("Failed to update job status: %v\n", err)
