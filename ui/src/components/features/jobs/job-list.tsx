@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useJobs, useJobActions } from "@/hooks/use-jobs";
+import { JobRow } from "./job-row";
 import {
   Table,
   TableBody,
@@ -76,17 +76,8 @@ function LoadingTable() {
 }
 
 export function JobList() {
-  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const { data: jobs, isLoading } = useJobs();
   const { stopJob, restartJob, removeJob } = useJobActions();
-
-  const handleRowClick = (jobId: string) => {
-    setExpandedJobId(expandedJobId === jobId ? null : jobId);
-  };
-
-  const handleStop = (id: string) => stopJob(id);
-  const handleRestart = (id: string) => restartJob(id);
-  const handleRemove = (id: string) => removeJob(id);
 
   if (isLoading) {
     return <LoadingTable />;
@@ -107,74 +98,13 @@ export function JobList() {
       </TableHeader>
       <TableBody>
         {jobs?.map((job) => (
-          <>
-            <TableRow 
-              key={job.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={(e) => {
-                // Prevent row click when clicking dropdown menu
-                if ((e.target as HTMLElement).closest('[role="menuitem"]')) {
-                  return;
-                }
-                handleRowClick(job.id);
-              }}
-            >
-            <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
-            <TableCell className="font-mono">{job.pid}</TableCell>
-            <TableCell>
-              <Badge
-                className={
-                  job.status === "completed"
-                    ? "bg-green-500 hover:bg-green-600"
-                    : job.status === "running"
-                      ? "bg-yellow-500 hover:bg-yellow-600"
-                      : job.status === "failed"
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-secondary hover:bg-secondary/80"
-                }
-              >
-                {job.status}
-              </Badge>
-            </TableCell>
-            <TableCell className="font-mono">{job.command}</TableCell>
-            <TableCell>{new Date(job.startedAt).toISOString()}</TableCell>
-            <TableCell>
-              {job.status === "running"
-                ? ""
-                : job.completedAt
-                  ? new Date(job.completedAt).toISOString()
-                  : "-"}
-            </TableCell>
-            <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {job.status === "running" ? (
-                    <DropdownMenuItem onClick={() => handleStop(job.id)}>
-                      <Square className="mr-2 h-4 w-4" />
-                      <span>Stop</span>
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={() => handleRestart(job.id)}>
-                      <Play className="mr-2 h-4 w-4" />
-                      <span>Restart</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => handleRemove(job.id)}
-                    className="text-red-600"
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    <span>Remove</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
+          <JobRow
+            key={job.id}
+            job={job}
+            onStop={stopJob}
+            onRestart={restartJob}
+            onRemove={removeJob}
+          />
         ))}
       </TableBody>
     </Table>
