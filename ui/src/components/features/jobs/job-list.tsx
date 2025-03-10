@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useJobs, useJobActions } from "@/hooks/use-jobs";
 import { JobRow } from "./job-row";
+import { CreateJobDialog } from "./create-job-dialog";
 import {
   Table,
   TableBody,
@@ -13,7 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function LoadingTable() {
   return (
-    <Table>
+    <>
+      <CreateJobDialog 
+        onJobCreated={handleJobCreated}
+        initialCommand={editCommand || undefined}
+      />
+      <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[100px]">ID</TableHead>
@@ -53,16 +59,19 @@ function LoadingTable() {
         ))}
       </TableBody>
     </Table>
+  </>
   );
 }
 
 export function JobList() {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [editCommand, setEditCommand] = useState<string | null>(null);
   const { data: jobs, isLoading } = useJobs();
   const { stopJob, restartJob, removeJob } = useJobActions();
 
   const handleJobCreated = (jobId: string) => {
     setExpandedJobId(jobId);
+    setEditCommand(null);
   };
 
   if (isLoading) {
@@ -92,6 +101,7 @@ export function JobList() {
             onStop={stopJob}
             onRestart={restartJob}
             onRemove={removeJob}
+            onEdit={(command) => setEditCommand(command)}
           />
         ))}
       </TableBody>
