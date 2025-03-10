@@ -15,10 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 function LoadingTable() {
   return (
     <>
-      <CreateJobDialog 
-        onJobCreated={handleJobCreated}
-        initialCommand={editCommand || undefined}
-      />
+      <CreateJobDialog />
       <Table>
       <TableHeader>
         <TableRow>
