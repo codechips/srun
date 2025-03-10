@@ -1,6 +1,7 @@
 package api
 
 import (
+	"io"
 	"net/http"
 	"srun/internal/core"
 	"time"
