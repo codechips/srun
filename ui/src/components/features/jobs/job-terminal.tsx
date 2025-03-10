@@ -27,9 +27,8 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
     })
     terminal.current.open(terminalRef.current)
 
-    // Connect to WebSocket for logs
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${wsProtocol}//${window.location.host}/api/jobs/${jobId}/logs`
+    // In development, connect through Vite's proxy
+    const wsUrl = `ws://${window.location.host}/api/jobs/${jobId}/logs`
     terminal.current?.writeln(`Connecting to ${wsUrl}...\r\n`)
     
     const ws = new WebSocket(wsUrl)
