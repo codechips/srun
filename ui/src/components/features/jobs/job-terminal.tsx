@@ -29,13 +29,7 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
 
     // In development, connect through Vite's proxy
     const wsUrl = `ws://${window.location.host}/api/jobs/${jobId}/logs`
-    terminal.current?.writeln(`Connecting to ${wsUrl}...\r\n`)
-    
     const ws = new WebSocket(wsUrl)
-    
-    ws.onopen = () => {
-      terminal.current?.writeln('WebSocket connection established\r\n')
-    }
 
     ws.onmessage = (event) => {
       try {
@@ -59,12 +53,10 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error)
-      terminal.current?.writeln(`\r\nError: WebSocket connection failed (${error.type})`)
     }
 
-    ws.onclose = (event) => {
-      console.log('WebSocket closed:', event.code, event.reason)
-      terminal.current?.writeln(`\r\nLog stream disconnected (code: ${event.code}${event.reason ? `, reason: ${event.reason}` : ''})`)
+    ws.onclose = () => {
+      console.log('WebSocket closed')
     }
 
     return () => {
