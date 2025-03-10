@@ -18,6 +18,7 @@ type SQLiteStorage struct {
 }
 
 func (s *SQLiteStorage) CreateJob(job *Job) error {
+    fmt.Printf("Creating job in database: %s\n", job.ID)
     _, err := s.db.Exec(
         `INSERT INTO jobs (id, command, pid, status, created_at) 
          VALUES (?, ?, ?, ?, ?)`,
@@ -30,6 +31,7 @@ func (s *SQLiteStorage) CreateJob(job *Job) error {
     if err != nil {
         return fmt.Errorf("failed to create job: %w", err)
     }
+    fmt.Printf("Successfully created job in database: %s\n", job.ID)
     return nil
 }
 
@@ -130,6 +132,8 @@ func (s *SQLiteStorage) ListJobs() ([]*Job, error) {
 }
 
 func (s *SQLiteStorage) BatchWriteLogs(logs []LogMessage) error {
+    fmt.Printf("Starting batch write of %d logs\n", len(logs))
+    
     tx, err := s.db.Begin()
     if err != nil {
         return fmt.Errorf("failed to begin transaction: %w", err)
@@ -145,7 +149,8 @@ func (s *SQLiteStorage) BatchWriteLogs(logs []LogMessage) error {
     }
     defer stmt.Close()
 
-    for _, log := range logs {
+    for i, log := range logs {
+        fmt.Printf("Writing log %d/%d for job %s\n", i+1, len(logs), log.JobID)
         _, err = stmt.Exec(
             log.JobID,
             log.RawText,
@@ -160,6 +165,7 @@ func (s *SQLiteStorage) BatchWriteLogs(logs []LogMessage) error {
     if err := tx.Commit(); err != nil {
         return fmt.Errorf("failed to commit transaction: %w", err)
     }
+    fmt.Printf("Successfully wrote %d logs to database\n", len(logs))
     return nil
 }
 
@@ -215,6 +221,8 @@ func (s *SQLiteStorage) GetJobLogs(jobID string) ([]LogMessage, error) {
 }
 
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
+    fmt.Printf("Opening SQLite database at: %s\n", dbPath)
+    
     // Ensure the directory exists
     dir := filepath.Dir(dbPath)
     if err := os.MkdirAll(dir, 0755); err != nil {

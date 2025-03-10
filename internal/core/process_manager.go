@@ -94,6 +94,9 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
             pm.logBuffer = append(pm.logBuffer, msg)
             pm.logMu.Unlock()
             
+            // Debug log
+            fmt.Printf("Received log for job %s: %s\n", job.ID, processed.Raw)
+            
             // Send to real-time channel
             pm.LogChan <- msg
         }
