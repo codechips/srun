@@ -90,17 +90,12 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
         // Give the process a small window to fail
         time.Sleep(100 * time.Millisecond)
         
+        // Check if process has already exited
         if err := cmd.Process.Signal(syscall.Signal(0)); err != nil {
-            // Process has already exited
-            pm.Mu.Lock()
-            job.Status = "failed"
-            job.CompletedAt = time.Now()
-            pm.Mu.Unlock()
-            
-            // Update job status in storage
-            if err := pm.Store.UpdateJobStatus(job.ID, "failed"); err != nil {
-                fmt.Printf("Failed to update job status: %v\n", err)
-            }
+            // Process has already exited, but we need to wait for the exit code
+            // which will be handled in the completion monitoring goroutine
+            // Don't mark as failed here
+            return
         }
     }()
 
