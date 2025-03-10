@@ -26,6 +26,7 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
     // Create job with unique ID
     job := &Job{
         ID:        uuid.New().String(),
+        Command:   command,
         Status:    "running",
         StartedAt: time.Now(),
         LogBuffer: ring.New(1000),
@@ -235,6 +236,7 @@ func (pm *ProcessManager) StopJob(id string) error {
     // Create new job record with stopped status
     newJob := &Job{
         ID:        uuid.New().String(),
+        Command:   job.Command,
         Status:    job.Status,
         StartedAt: job.StartedAt,
         LogBuffer: job.LogBuffer,
