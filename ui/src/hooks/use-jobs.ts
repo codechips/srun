@@ -21,6 +21,20 @@ export function useJobs() {
   })
 }
 
+export function useJob(id: string, enabled: boolean = true) {
+  return useQuery<Job>({
+    queryKey: ['jobs', id],
+    queryFn: async () => {
+      const response = await fetch(`/api/jobs/${id}`)
+      if (!response.ok) throw new Error('Failed to fetch job')
+      return response.json()
+    },
+    enabled,
+    refetchInterval: (data) => 
+      data?.status === 'running' ? 5000 : false
+  })
+}
+
 export function useJobActions() {
   const queryClient = useQueryClient()
 

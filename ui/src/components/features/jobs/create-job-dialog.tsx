@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { JobTerminal } from "./job-terminal"
+import { useJob } from "@/hooks/use-jobs"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -29,6 +30,11 @@ export function CreateJobDialog() {
       toast.success('Job created successfully')
       setJobId(data.id)
       setShowLogs(true)
+      
+      // Check job status after 1s for quick commands
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['jobs', data.id] })
+      }, 1000)
     },
     onError: (error) => {
       toast.error(`Failed to create job: ${error.message}`)
@@ -39,6 +45,20 @@ export function CreateJobDialog() {
     e.preventDefault()
     createMutation.mutate(command)
   }
+
+  // Poll job status
+  const { data: job } = useJob(jobId, showLogs)
+
+  // Close dialog when job completes
+  useEffect(() => {
+    if (job?.status === 'completed' || job?.status === 'failed') {
+      setTimeout(() => {
+        setShowLogs(false)
+        setCommand("")
+        setJobId("")
+      }, 1000)
+    }
+  }, [job?.status])
 
   return (
     <Dialog>
