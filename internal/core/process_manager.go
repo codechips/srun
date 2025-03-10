@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"srun/internal/ansi"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -83,6 +84,25 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
         delete(pm.Jobs, job.ID)
         return nil, fmt.Errorf("failed to create job: %w", err)
     }
+
+    // Start a goroutine to check for immediate failure
+    go func() {
+        // Give the process a small window to fail
+        time.Sleep(100 * time.Millisecond)
+        
+        if err := cmd.Process.Signal(syscall.Signal(0)); err != nil {
+            // Process has already exited
+            pm.Mu.Lock()
+            job.Status = "failed"
+            job.CompletedAt = time.Now()
+            pm.Mu.Unlock()
+            
+            // Update job status in storage
+            if err := pm.Store.UpdateJobStatus(job.ID, "failed"); err != nil {
+                fmt.Printf("Failed to update job status: %v\n", err)
+            }
+        }
+    }()
 
     // Handle command output in goroutines
     go func() {
