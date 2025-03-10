@@ -132,6 +132,7 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
     go func() {
         err := cmd.Wait()
         pm.Mu.Lock()
+        job.CompletedAt = time.Now()
         if err != nil {
             if ctx.Err() == context.DeadlineExceeded {
                 job.Status = "timeout"
@@ -339,14 +340,15 @@ func (pm *ProcessManager) Cleanup() {
 }
 
 type Job struct {
-    ID        string
-    Cmd       *exec.Cmd
-    Command   string             // Store command string directly
-    PID       int               // Process ID
-    Cancel    context.CancelFunc
-    Status    string // running, stopped, completed
-    StartedAt time.Time
-    LogBuffer *ring.Ring // 1000 elements
+    ID          string
+    Cmd         *exec.Cmd
+    Command     string             // Store command string directly
+    PID         int               // Process ID
+    Cancel      context.CancelFunc
+    Status      string // running, stopped, completed
+    StartedAt   time.Time
+    CompletedAt time.Time         // When the job finished (success or failure)
+    LogBuffer   *ring.Ring // 1000 elements
 }
 
 type LogMessage struct {
