@@ -1,5 +1,3 @@
-import { useState } from "react";
-import React from "react";
 import { useJobs, useJobActions } from "@/hooks/use-jobs";
 import {
   Table,
@@ -19,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Play, Square, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { JobTerminal } from "./job-terminal";
 
 function LoadingTable() {
   return (
@@ -60,16 +57,6 @@ function LoadingTable() {
               <Skeleton className="h-8 w-8 rounded-full ml-auto" />
             </TableCell>
           </TableRow>
-            {expandedJobId === job.id && (
-              <TableRow>
-                <TableCell colSpan={7} className="p-0">
-                  <div className="p-4">
-                    <JobTerminal jobId={job.id} />
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </React.Fragment>
         ))}
       </TableBody>
     </Table>
@@ -77,13 +64,8 @@ function LoadingTable() {
 }
 
 export function JobList() {
-  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const { data: jobs, isLoading } = useJobs();
   const { stopJob, restartJob, removeJob } = useJobActions();
-
-  const handleRowClick = (jobId: string) => {
-    setExpandedJobId(expandedJobId === jobId ? null : jobId);
-  };
 
   const handleStop = (id: string) => stopJob(id);
   const handleRestart = (id: string) => restartJob(id);
@@ -108,18 +90,7 @@ export function JobList() {
       </TableHeader>
       <TableBody>
         {jobs?.map((job) => (
-          <React.Fragment key={job.id}>
-            <TableRow 
-              key={job.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={(e) => {
-                // Prevent row click when clicking dropdown menu
-                if ((e.target as HTMLElement).closest('.dropdown-trigger')) {
-                  return;
-                }
-                handleRowClick(job.id);
-              }}
-            >
+          <TableRow key={job.id}>
             <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
             <TableCell className="font-mono">{job.pid}</TableCell>
             <TableCell>
@@ -149,7 +120,7 @@ export function JobList() {
             <TableCell className="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0 dropdown-trigger">
+                  <Button variant="ghost" className="h-8 w-8 p-0">
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
