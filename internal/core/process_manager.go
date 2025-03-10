@@ -138,7 +138,7 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
             if ctx.Err() == context.DeadlineExceeded {
                 job.Status = "timeout"
             } else {
-                job.Status = "error"
+                job.Status = "failed"
             }
         } else {
             job.Status = "completed"
