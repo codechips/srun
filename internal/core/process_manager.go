@@ -171,7 +171,15 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
             if ctx.Err() == context.DeadlineExceeded {
                 job.Status = "timeout"
             } else {
-                job.Status = "failed"
+                // Check if the error contains an exit code
+                if exitErr, ok := err.(*exec.ExitError); ok {
+                    if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+                        fmt.Printf("Command failed with exit code: %d\n", status.ExitStatus())
+                        job.Status = "failed"
+                    }
+                } else {
+                    job.Status = "failed"
+                }
             }
         } else {
             job.Status = "completed"
