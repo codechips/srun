@@ -108,8 +108,6 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
                 JobID:     job.ID,
                 Text:      processed.Plain,
                 RawText:   processed.Raw,
-                Styles:    processed.Styles,
-                Progress:  processed.Progress,
                 Time:      time.Now(),
             }
 
@@ -388,10 +386,8 @@ type Job struct {
 
 type LogMessage struct {
     JobID     string
-    Text      string                // Plain text without ANSI codes
-    RawText   string                // Original text with ANSI codes
-    Styles    map[int][]string      // Style information
-    Progress  *ansi.ProgressInfo    // Progress information if detected
+    Text      string    // Plain text without ANSI codes
+    RawText   string    // Original text with ANSI codes
     Time      time.Time
 }
 

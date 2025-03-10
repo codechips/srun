@@ -237,8 +237,6 @@ func (s *SQLiteStorage) GetJobLogs(jobID string) ([]LogMessage, error) {
             JobID:    jobID,
             Text:     processed.Plain,
             RawText:  processed.Raw,
-            Styles:   processed.Styles,
-            Progress: processed.Progress,
             Time:     createdAt,
         })
     }
