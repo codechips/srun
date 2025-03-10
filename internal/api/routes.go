@@ -27,31 +27,154 @@ func SetupRoutes(r *gin.Engine, pm *core.ProcessManager) {
 
 func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(501, gin.H{"error": "not implemented"})
+		jobs, err := pm.ListJobs()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to list jobs: " + err.Error(),
+			})
+			return
+		}
+
+		// Convert jobs to response format
+		var response []gin.H
+		for _, job := range jobs {
+			response = append(response, gin.H{
+				"id":         job.ID,
+				"status":     job.Status,
+				"started_at": job.StartedAt,
+			})
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 
 func getJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(501, gin.H{"error": "not implemented"})
+		id := c.Param("id")
+		job, err := pm.GetJob(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get job: " + err.Error(),
+			})
+			return
+		}
+		if job == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Job not found",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"id":         job.ID,
+			"status":     job.Status,
+			"started_at": job.StartedAt,
+		})
 	}
 }
 
 func stopJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(501, gin.H{"error": "not implemented"})
+		id := c.Param("id")
+		if err := pm.StopJob(id); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to stop job: " + err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Job stopped successfully",
+		})
 	}
 }
 
 func restartJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(501, gin.H{"error": "not implemented"})
+		id := c.Param("id")
+		job, err := pm.RestartJob(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to restart job: " + err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"id":         job.ID,
+			"status":     job.Status,
+			"started_at": job.StartedAt,
+		})
 	}
 }
 
 func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(501, gin.H{"error": "not implemented"})
+		id := c.Param("id")
+
+		// Check if job exists
+		job, err := pm.GetJob(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get job: " + err.Error(),
+			})
+			return
+		}
+		if job == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Job not found",
+			})
+			return
+		}
+
+		// Get historical logs
+		logs, err := pm.Store.GetJobLogs(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get logs: " + err.Error(),
+			})
+			return
+		}
+
+		// Set headers for SSE
+		c.Header("Content-Type", "text/event-stream")
+		c.Header("Cache-Control", "no-cache")
+		c.Header("Connection", "keep-alive")
+		c.Header("Transfer-Encoding", "chunked")
+
+		// Send historical logs first
+		for _, log := range logs {
+			c.SSEvent("log", log)
+		}
+		c.Writer.Flush()
+
+		// If job is still running, stream new logs
+		if job.Status == "running" {
+			// Create channel for this client
+			clientChan := make(chan core.LogMessage, 10)
+
+			// Subscribe to log channel
+			go func() {
+				for msg := range pm.LogChan {
+					if msg.JobID == id {
+						clientChan <- msg
+					}
+				}
+			}()
+
+			// Stream logs until connection closes
+			c.Stream(func(w io.Writer) bool {
+				select {
+				case msg := <-clientChan:
+					c.SSEvent("log", msg)
+					return true
+				case <-c.Done():
+					close(clientChan)
+					return false
+				}
+			})
+		}
 	}
 }
 
