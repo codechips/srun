@@ -11,8 +11,7 @@ import (
 )
 
 type CreateJobRequest struct {
-	Command string        `json:"command" binding:"required"`
-	Timeout time.Duration `json:"timeout"` // in seconds
+	Command string `json:"command" binding:"required"`
 }
 
 func SetupRoutes(r *gin.Engine, pm *core.ProcessManager) {
@@ -189,21 +188,8 @@ func createJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			return
 		}
 
-		// Set default timeout if not specified
-		if req.Timeout == 0 {
-			req.Timeout = time.Hour // 1 hour default
-		}
-
-		// Validate timeout range (5m to 8h)
-		if req.Timeout < 5*time.Minute || req.Timeout > 8*time.Hour {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Timeout must be between 5 minutes and 8 hours",
-			})
-			return
-		}
-
-		// Start the job
-		job, err := pm.StartJob(req.Command, req.Timeout)
+		// Start the job without timeout
+		job, err := pm.StartJob(req.Command)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Failed to start job: " + err.Error(),

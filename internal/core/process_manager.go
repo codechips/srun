@@ -21,12 +21,7 @@ type ProcessManager struct {
     logMu     sync.Mutex
 }
 
-func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job, error) {
-    // Validate timeout range (5m to 8h)
-    if timeout < 5*time.Minute || timeout > 8*time.Hour {
-        return nil, fmt.Errorf("timeout must be between 5 minutes and 8 hours")
-    }
-
+func (pm *ProcessManager) StartJob(command string) (*Job, error) {
     // Create job with unique ID
     job := &Job{
         ID:        uuid.New().String(),
@@ -35,8 +30,8 @@ func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job,
         LogBuffer: ring.New(1000),
     }
 
-    // Create context with timeout
-    ctx, cancel := context.WithTimeout(context.Background(), timeout)
+    // Create context without timeout - just use background context
+    ctx, cancel := context.WithCancel(context.Background())
     job.Cancel = cancel
 
     // Prepare command
