@@ -92,9 +92,9 @@ export function JobList() {
               </Badge>
             </TableCell>
             <TableCell className="font-mono">{job.command}</TableCell>
-            <TableCell>{new Date(job.startedAt).toLocaleString()}</TableCell>
+            <TableCell>{new Date(job.startedAt).toISOString()}</TableCell>
             <TableCell>
-              {job.completedAt ? new Date(job.completedAt).toLocaleString() : '-'}
+              {job.status === 'running' ? '' : job.completedAt ? new Date(job.completedAt).toISOString() : '-'}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
