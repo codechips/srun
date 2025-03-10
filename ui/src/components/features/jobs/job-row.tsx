@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { JobStatusBadge } from "./job-status-badge";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, Play, Square, Trash } from "lucide-react";
 import {
@@ -37,19 +37,7 @@ export function JobRow({ job, expanded, onExpand, onStop, onRestart, onRemove }:
         <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
         <TableCell className="font-mono">{job.pid}</TableCell>
         <TableCell>
-          <Badge
-            className={
-              job.status === "completed"
-                ? "bg-green-500 hover:bg-green-600"
-                : job.status === "running"
-                  ? "bg-yellow-500 hover:bg-yellow-600"
-                  : job.status === "failed"
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-secondary hover:bg-secondary/80"
-            }
-          >
-            {job.status}
-          </Badge>
+          <JobStatusBadge status={job.status as "completed" | "running" | "failed" | "stopped"} />
         </TableCell>
         <TableCell className="font-mono">{job.command}</TableCell>
         <TableCell>{new Date(job.startedAt).toISOString()}</TableCell>
