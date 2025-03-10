@@ -39,14 +39,18 @@ func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		// Convert jobs to response format
 		var response []gin.H
 		for _, job := range jobs {
-			response = append(response, gin.H{
-				"id":          job.ID,
-				"command":     job.Command,
-				"status":      job.Status,
-				"pid":         job.PID,
-				"startedAt":   job.StartedAt.Format(time.RFC3339),
-				"completedAt": job.CompletedAt.Format(time.RFC3339),
-			})
+			resp := gin.H{
+				"id":        job.ID,
+				"command":   job.Command,
+				"status":    job.Status,
+				"pid":       job.PID,
+				"startedAt": job.StartedAt.Format(time.RFC3339),
+			}
+			// Only include completedAt if it's not zero time
+			if !job.CompletedAt.IsZero() {
+				resp["completedAt"] = job.CompletedAt.Format(time.RFC3339)
+			}
+			response = append(response, resp)
 		}
 
 		c.JSON(http.StatusOK, response)
@@ -70,14 +74,18 @@ func getJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"id":          job.ID,
-			"command":     job.Command,
-			"status":      job.Status,
-			"pid":         job.PID,
-			"startedAt":   job.StartedAt.Format(time.RFC3339),
-			"completedAt": job.CompletedAt.Format(time.RFC3339),
-		})
+		resp := gin.H{
+			"id":        job.ID,
+			"command":   job.Command,
+			"status":    job.Status,
+			"pid":       job.PID,
+			"startedAt": job.StartedAt.Format(time.RFC3339),
+		}
+		// Only include completedAt if it's not zero time
+		if !job.CompletedAt.IsZero() {
+			resp["completedAt"] = job.CompletedAt.Format(time.RFC3339)
+		}
+		c.JSON(http.StatusOK, resp)
 	}
 }
 
@@ -206,13 +214,17 @@ func createJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		}
 
 		// Return job information
-		c.JSON(http.StatusCreated, gin.H{
-			"id":          job.ID,
-			"command":     req.Command,
-			"status":      job.Status,
-			"pid":         job.PID,
-			"startedAt":   job.StartedAt.Format(time.RFC3339),
-			"completedAt": job.CompletedAt.Format(time.RFC3339),
-		})
+		resp := gin.H{
+			"id":        job.ID,
+			"command":   req.Command,
+			"status":    job.Status,
+			"pid":       job.PID,
+			"startedAt": job.StartedAt.Format(time.RFC3339),
+		}
+		// Only include completedAt if it's not zero time
+		if !job.CompletedAt.IsZero() {
+			resp["completedAt"] = job.CompletedAt.Format(time.RFC3339)
+		}
+		c.JSON(http.StatusCreated, resp)
 	}
 }
