@@ -52,21 +52,26 @@ func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			return
 		}
 
-		// Convert jobs to response format
-		var response []gin.H
-		for _, job := range jobs {
-			resp := gin.H{
-				"id":        job.ID,
-				"command":   job.Command,
-				"status":    job.Status,
-				"pid":       job.PID,
-				"startedAt": job.StartedAt.Format(time.RFC3339),
+		// Initialize empty response slice
+		response := make([]gin.H, 0)
+		
+		// Only process jobs if not nil
+		if jobs != nil {
+			// Convert jobs to response format
+			for _, job := range jobs {
+				resp := gin.H{
+					"id":        job.ID,
+					"command":   job.Command,
+					"status":    job.Status,
+					"pid":       job.PID,
+					"startedAt": job.StartedAt.Format(time.RFC3339),
+				}
+				// Only include completedAt if it's not zero time
+				if !job.CompletedAt.IsZero() {
+					resp["completedAt"] = job.CompletedAt.Format(time.RFC3339)
+				}
+				response = append(response, resp)
 			}
-			// Only include completedAt if it's not zero time
-			if !job.CompletedAt.IsZero() {
-				resp["completedAt"] = job.CompletedAt.Format(time.RFC3339)
-			}
-			response = append(response, resp)
 		}
 
 		c.JSON(http.StatusOK, response)
