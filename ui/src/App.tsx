@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { Toaster } from "sonner"
 import { RootLayout } from "./components/layout/root-layout"
 import { JobsPage } from "./pages/jobs-page"
 
@@ -10,6 +11,7 @@ function App() {
       <RootLayout>
         <JobsPage />
       </RootLayout>
+      <Toaster />
     </QueryClientProvider>
   )
 }

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Table,
   TableBody,
@@ -8,6 +8,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "sonner"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +28,39 @@ interface Job {
   completedAt?: string
 }
 
+function LoadingTable() {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[100px]">ID</TableHead>
+          <TableHead className="w-[80px]">PID</TableHead>
+          <TableHead className="w-[100px]">Status</TableHead>
+          <TableHead>Command</TableHead>
+          <TableHead className="w-[180px]">Started</TableHead>
+          <TableHead className="w-[180px]">Completed</TableHead>
+          <TableHead className="w-[100px] text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[...Array(5)].map((_, i) => (
+          <TableRow key={i}>
+            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-10" /></TableCell>
+            <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+            <TableCell><Skeleton className="h-8 w-8 rounded-full ml-auto" /></TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
 export function JobList() {
+  const queryClient = useQueryClient()
   const { data: jobs, isLoading } = useQuery<Job[]>({
     queryKey: ['jobs'],
     queryFn: async () => {
@@ -35,21 +69,54 @@ export function JobList() {
     }
   })
 
-  const handleStop = async (id: string) => {
-    await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
-  }
+  const stopMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('Failed to stop job')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      toast.success('Job stopped successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to stop job: ${error.message}`)
+    }
+  })
 
-  const handleRestart = async (id: string) => {
-    await fetch(`/api/jobs/${id}/restart`, { method: 'POST' })
-  }
+  const restartMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/jobs/${id}/restart`, { method: 'POST' })
+      if (!response.ok) throw new Error('Failed to restart job')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      toast.success('Job restarted successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to restart job: ${error.message}`)
+    }
+  })
 
-  const handleRemove = async (id: string) => {
-    // TODO: Add confirmation dialog
-    await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
-  }
+  const removeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('Failed to remove job')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      toast.success('Job removed successfully')
+    },
+    onError: (error) => {
+      toast.error(`Failed to remove job: ${error.message}`)
+    }
+  })
+
+  const handleStop = (id: string) => stopMutation.mutate(id)
+  const handleRestart = (id: string) => restartMutation.mutate(id)
+  const handleRemove = (id: string) => removeMutation.mutate(id)
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <LoadingTable />
   }
 
   return (
