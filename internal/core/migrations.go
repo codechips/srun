@@ -7,7 +7,7 @@ var migrations = []string{
         id TEXT PRIMARY KEY,
         command TEXT NOT NULL,
         pid INTEGER,
-        status TEXT CHECK(status IN ('running', 'stopped', 'completed')) NOT NULL,
+        status TEXT CHECK(status IN ('running', 'stopped', 'completed', 'failed', 'timeout')) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         stopped_at DATETIME,
         exit_code INTEGER
