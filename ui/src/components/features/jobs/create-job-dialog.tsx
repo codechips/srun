@@ -7,10 +7,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
-export function CreateJobDialog() {
+interface CreateJobDialogProps {
+  onJobCreated?: (jobId: string) => void;
+}
+
+export function CreateJobDialog({ onJobCreated }: CreateJobDialogProps) {
   const [command, setCommand] = useState("")
-  const [showLogs, setShowLogs] = useState(false)
-  const [jobId, setJobId] = useState<string>("")
+  const [open, setOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const createMutation = useMutation({
@@ -28,13 +31,9 @@ export function CreateJobDialog() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       toast.success('Job created successfully')
-      setJobId(data.id)
-      setShowLogs(true)
-      
-      // Check job status after 1s for quick commands
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['jobs', data.id] })
-      }, 1000)
+      onJobCreated?.(data.id)
+      setOpen(false)
+      setCommand("")
     },
     onError: (error) => {
       toast.error(`Failed to create job: ${error.message}`)
@@ -46,22 +45,8 @@ export function CreateJobDialog() {
     createMutation.mutate(command)
   }
 
-  // Poll job status
-  const { data: job } = useJob(jobId, showLogs)
-
-  // Close dialog when job completes
-  useEffect(() => {
-    if (job?.status === 'completed' || job?.status === 'failed') {
-      setTimeout(() => {
-        setShowLogs(false)
-        setCommand("")
-        setJobId("")
-      }, 1000)
-    }
-  }, [job?.status])
-
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>New Job</Button>
       </DialogTrigger>
@@ -69,12 +54,7 @@ export function CreateJobDialog() {
         <DialogHeader>
           <DialogTitle>Create New Job</DialogTitle>
         </DialogHeader>
-        {showLogs ? (
-          <div className="py-4">
-            <JobTerminal jobId={jobId} />
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Textarea
               id="command"
@@ -89,7 +69,6 @@ export function CreateJobDialog() {
             Create Job
           </Button>
         </form>
-      )}
       </DialogContent>
     </Dialog>
   )
