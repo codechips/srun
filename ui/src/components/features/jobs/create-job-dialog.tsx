@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCreateJob } from "@/hooks/use-jobs";
 import { toast } from "sonner";
 
 interface CreateJobDialogProps {
@@ -18,35 +18,21 @@ interface CreateJobDialogProps {
 export function CreateJobDialog({ onJobCreated }: CreateJobDialogProps) {
   const [command, setCommand] = useState("");
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const createMutation = useMutation({
-    mutationFn: async (command: string) => {
-      const response = await fetch("/api/jobs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ command }),
-      });
-      if (!response.ok) throw new Error("Failed to create job");
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      toast.success("Job created successfully");
-      onJobCreated?.(data.id);
-      setOpen(false);
-      setCommand("");
-    },
-    onError: (error) => {
-      toast.error(`Failed to create job: ${error.message}`);
-    },
-  });
+  const createJob = useCreateJob();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(command);
+    createJob.mutate(command, {
+      onSuccess: (data) => {
+        toast.success("Job created successfully");
+        onJobCreated?.(data.id);
+        setOpen(false);
+        setCommand("");
+      },
+      onError: (error) => {
+        toast.error(`Failed to create job: ${error.message}`);
+      },
+    });
   };
 
   return (

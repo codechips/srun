@@ -35,6 +35,27 @@ export function useJob(id: string, enabled: boolean = true) {
   })
 }
 
+export function useCreateJob() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (command: string) => {
+      const response = await fetch("/api/jobs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ command }),
+      });
+      if (!response.ok) throw new Error("Failed to create job");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+}
+
 export function useJobActions() {
   const queryClient = useQueryClient()
 
