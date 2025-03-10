@@ -1,4 +1,4 @@
-import { useJobs, useJobActions } from "@/hooks/use-jobs"
+import { useJobs, useJobActions } from "@/hooks/use-jobs";
 import {
   Table,
   TableBody,
@@ -6,19 +6,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { toast } from "sonner"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreVertical, Play, Square, Trash } from "lucide-react"
-import { Button } from "@/components/ui/button"
-
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical, Play, Square, Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 function LoadingTable() {
   return (
@@ -37,30 +35,44 @@ function LoadingTable() {
       <TableBody>
         {[...Array(5)].map((_, i) => (
           <TableRow key={i}>
-            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-10" /></TableCell>
-            <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-            <TableCell><Skeleton className="h-8 w-8 rounded-full ml-auto" /></TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-20" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-10" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-6 w-16" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-32" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-32" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-8 w-8 rounded-full ml-auto" />
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }
 
 export function JobList() {
-  const { data: jobs, isLoading } = useJobs()
-  const { stopJob, restartJob, removeJob } = useJobActions()
+  const { data: jobs, isLoading } = useJobs();
+  const { stopJob, restartJob, removeJob } = useJobActions();
 
-  const handleStop = (id: string) => stopJob(id)
-  const handleRestart = (id: string) => restartJob(id)
-  const handleRemove = (id: string) => removeJob(id)
+  const handleStop = (id: string) => stopJob(id);
+  const handleRestart = (id: string) => restartJob(id);
+  const handleRemove = (id: string) => removeJob(id);
 
   if (isLoading) {
-    return <LoadingTable />
+    return <LoadingTable />;
   }
 
   return (
@@ -80,21 +92,30 @@ export function JobList() {
         {jobs?.map((job) => (
           <TableRow key={job.id}>
             <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
-            <TableCell>{job.pid}</TableCell>
+            <TableCell className="font-mono">{job.pid}</TableCell>
             <TableCell>
-              <Badge className={
-                job.status === 'completed' ? 'bg-green-500 hover:bg-green-600' :
-                job.status === 'running' ? 'bg-yellow-500 hover:bg-yellow-600' :
-                job.status === 'failed' ? 'bg-red-500 hover:bg-red-600' :
-                'bg-secondary hover:bg-secondary/80'
-              }>
+              <Badge
+                className={
+                  job.status === "completed"
+                    ? "bg-green-500 hover:bg-green-600"
+                    : job.status === "running"
+                      ? "bg-yellow-500 hover:bg-yellow-600"
+                      : job.status === "failed"
+                        ? "bg-red-500 hover:bg-red-600"
+                        : "bg-secondary hover:bg-secondary/80"
+                }
+              >
                 {job.status}
               </Badge>
             </TableCell>
             <TableCell className="font-mono">{job.command}</TableCell>
             <TableCell>{new Date(job.startedAt).toISOString()}</TableCell>
             <TableCell>
-              {job.status === 'running' ? '' : job.completedAt ? new Date(job.completedAt).toISOString() : '-'}
+              {job.status === "running"
+                ? ""
+                : job.completedAt
+                  ? new Date(job.completedAt).toISOString()
+                  : "-"}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
@@ -104,7 +125,7 @@ export function JobList() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {job.status === 'running' ? (
+                  {job.status === "running" ? (
                     <DropdownMenuItem onClick={() => handleStop(job.id)}>
                       <Square className="mr-2 h-4 w-4" />
                       <span>Stop</span>
@@ -115,7 +136,7 @@ export function JobList() {
                       <span>Restart</span>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleRemove(job.id)}
                     className="text-red-600"
                   >
@@ -129,5 +150,5 @@ export function JobList() {
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }
