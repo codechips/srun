@@ -1,4 +1,5 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Faster+One&display=swap');
+@tailwind base;
 
 @plugin "tailwindcss-animate";
 
@@ -115,6 +116,10 @@
 }
 
 @layer base {
+    .app-title {
+        font-family: 'Faster One', system-ui;
+    }
+
     :root {
         --background: 0 0% 100%;
         --foreground: 240 10% 3.9%;
