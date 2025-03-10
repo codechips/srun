@@ -14,7 +14,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main className="flex-1">
-          <div className="container">
+          <div className="container max-w-7xl mx-auto">
             {children}
           </div>
         </main>
