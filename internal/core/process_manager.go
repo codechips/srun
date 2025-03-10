@@ -6,10 +6,11 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"srun/internal/ansi"
 	"sync"
 	"time"
+
 	"github.com/google/uuid"
-	"srun/internal/ansi"
 )
 
 type ProcessManager struct {
@@ -82,19 +83,19 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
                 Progress:  processed.Progress,
                 Time:      time.Now(),
             }
-            
+
             // Store in ring buffer
             job.LogBuffer.Value = processed.Raw
             job.LogBuffer = job.LogBuffer.Next()
-            
+
             // Add to batch buffer
             pm.logMu.Lock()
             pm.logBuffer = append(pm.logBuffer, msg)
             pm.logMu.Unlock()
-            
+
             // Debug log
             fmt.Printf("Received log for job %s: %s\n", job.ID, processed.Raw)
-            
+
             // Send to real-time channel
             pm.LogChan <- msg
         }
@@ -112,16 +113,16 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
                 Progress:  processed.Progress,
                 Time:      time.Now(),
             }
-            
+
             // Store in ring buffer
             job.LogBuffer.Value = processed.Raw
             job.LogBuffer = job.LogBuffer.Next()
-            
+
             // Add to batch buffer
             pm.logMu.Lock()
             pm.logBuffer = append(pm.logBuffer, msg)
             pm.logMu.Unlock()
-            
+
             // Send to real-time channel
             pm.LogChan <- msg
         }
@@ -141,10 +142,10 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
             job.Status = "completed"
         }
         pm.Mu.Unlock()
-        
+
         // Flush any remaining logs before updating status
         pm.flushLogs()
-        
+
         // Update existing job record with final status
         if err := pm.Store.UpdateJobStatus(job.ID, job.Status); err != nil {
             fmt.Printf("Failed to update job status: %v\n", err)
@@ -180,7 +181,7 @@ func (pm *ProcessManager) flushLogs() {
         pm.logMu.Unlock()
         return
     }
-    
+
     // Copy buffer and clear it
     logsToWrite := make([]LogMessage, len(pm.logBuffer))
     copy(logsToWrite, pm.logBuffer)
@@ -264,8 +265,8 @@ func (pm *ProcessManager) RestartJob(id string) (*Job, error) {
     // Get the original command from the old job's Cmd
     originalCmd := oldJob.Cmd.Args[2] // Skip "sh" and "-c"
 
-    // Start a new job with the same command and a 1-hour default timeout
-    newJob, err := pm.StartJob(originalCmd, 1*time.Hour)
+    // Start a new job with the same command
+    newJob, err := pm.StartJob(originalCmd)
     if err != nil {
         return nil, fmt.Errorf("failed to restart job: %w", err)
     }

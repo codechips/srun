@@ -24,7 +24,7 @@ func main() {
 
 	// Port configuration with flag and env var
 	var port string
-	flag.StringVar(&port, "port", "", "Port to listen on")
+	flag.StringVar(&port, "port", "8000", "Port to listen on")
 	flag.Parse()
 
 	// Check environment variable if flag not set

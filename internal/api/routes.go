@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"srun/internal/core"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
