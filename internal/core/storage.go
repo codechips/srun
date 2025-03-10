@@ -63,6 +63,7 @@ func (s *SQLiteStorage) GetJob(id string) (*Job, error) {
         Status:    status,
         StartedAt: createdAt,
         LogBuffer: ring.New(1000),
+        Command:   command, // Store command string directly
     }
 
     // Only create Cmd if job is not completed/stopped

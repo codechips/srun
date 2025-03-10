@@ -342,6 +342,7 @@ func (pm *ProcessManager) Cleanup() {
 type Job struct {
     ID        string
     Cmd       *exec.Cmd
+    Command   string             // Store command string directly
     Cancel    context.CancelFunc
     Status    string // running, stopped, completed
     StartedAt time.Time

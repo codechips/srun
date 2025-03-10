@@ -42,6 +42,7 @@ func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		for _, job := range jobs {
 			response = append(response, gin.H{
 				"id":         job.ID,
+				"command":    job.Command,
 				"status":     job.Status,
 				"started_at": job.StartedAt,
 			})
