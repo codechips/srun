@@ -65,5 +65,5 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
     }
   }, [jobId])
 
-  return <div ref={terminalRef} className="h-[500px] bg-[#1a1b1e] rounded-md" />
+  return <div ref={terminalRef} className="h-[500px] bg-[#1a1b1e] rounded-md p-4" />
 }
