@@ -168,12 +168,12 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 
 		// Log headers for debugging
 		for k, v := range c.Request.Header {
-			c.Logger().Info("Header: ", k, v)
+			gin.DefaultWriter.Write([]byte("Header: " + k + ": " + v[0] + "\n"))
 		}
 
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			c.Logger().Error("WebSocket upgrade failed: ", err)
+			gin.DefaultErrorWriter.Write([]byte("WebSocket upgrade failed: " + err.Error() + "\n"))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upgrade connection: " + err.Error()})
 			return
 		}
