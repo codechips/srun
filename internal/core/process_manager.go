@@ -1,12 +1,14 @@
 package core
 
 import (
+	"bufio"
 	"container/ring"
 	"context"
 	"fmt"
 	"os/exec"
 	"sync"
 	"time"
+	"github.com/google/uuid"
 )
 
 type ProcessManager struct {
@@ -14,6 +16,105 @@ type ProcessManager struct {
     Jobs     map[string]*Job
     Store    Storage
     LogChan  chan LogMessage
+}
+
+func (pm *ProcessManager) StartJob(command string, timeout time.Duration) (*Job, error) {
+    // Validate timeout range (5m to 8h)
+    if timeout < 5*time.Minute || timeout > 8*time.Hour {
+        return nil, fmt.Errorf("timeout must be between 5 minutes and 8 hours")
+    }
+
+    // Create job with unique ID
+    job := &Job{
+        ID:        uuid.New().String(),
+        Status:    "running",
+        StartedAt: time.Now(),
+        LogBuffer: ring.New(1000),
+    }
+
+    // Create context with timeout
+    ctx, cancel := context.WithTimeout(context.Background(), timeout)
+    job.Cancel = cancel
+
+    // Prepare command
+    cmd := exec.CommandContext(ctx, "sh", "-c", command)
+    job.Cmd = cmd
+
+    // Set up pipes for stdout and stderr
+    stdout, err := cmd.StdoutPipe()
+    if err != nil {
+        return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
+    }
+    stderr, err := cmd.StderrPipe()
+    if err != nil {
+        return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
+    }
+
+    // Start the command
+    if err := cmd.Start(); err != nil {
+        return nil, fmt.Errorf("failed to start command: %w", err)
+    }
+
+    // Store job in manager
+    pm.Mu.Lock()
+    pm.Jobs[job.ID] = job
+    pm.Mu.Unlock()
+
+    // Save job to storage
+    if err := pm.Store.SaveJob(job); err != nil {
+        // Cleanup if storage fails
+        job.Cancel()
+        delete(pm.Jobs, job.ID)
+        return nil, fmt.Errorf("failed to save job: %w", err)
+    }
+
+    // Handle command output in goroutines
+    go func() {
+        scanner := bufio.NewScanner(stdout)
+        for scanner.Scan() {
+            pm.LogChan <- LogMessage{
+                JobID: job.ID,
+                Text:  scanner.Text(),
+                Time:  time.Now(),
+            }
+            job.LogBuffer.Value = scanner.Text()
+            job.LogBuffer = job.LogBuffer.Next()
+        }
+    }()
+
+    go func() {
+        scanner := bufio.NewScanner(stderr)
+        for scanner.Scan() {
+            pm.LogChan <- LogMessage{
+                JobID: job.ID,
+                Text:  scanner.Text(),
+                Time:  time.Now(),
+            }
+            job.LogBuffer.Value = scanner.Text()
+            job.LogBuffer = job.LogBuffer.Next()
+        }
+    }()
+
+    // Monitor command completion
+    go func() {
+        err := cmd.Wait()
+        pm.Mu.Lock()
+        if err != nil {
+            if ctx.Err() == context.DeadlineExceeded {
+                job.Status = "timeout"
+            } else {
+                job.Status = "error"
+            }
+        } else {
+            job.Status = "completed"
+        }
+        pm.Mu.Unlock()
+        
+        // Update storage with final status
+        _ = pm.Store.SaveJob(job)
+    }()
+
+    return job, nil
 }
 
 func NewProcessManager(store Storage) *ProcessManager {
