@@ -28,34 +28,44 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
     terminal.current.open(terminalRef.current)
 
     // Connect to WebSocket for logs
-    const ws = new WebSocket(`ws://${window.location.host}/api/jobs/${jobId}/logs`)
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/jobs/${jobId}/logs`
+    terminal.current?.writeln(`Connecting to ${wsUrl}...\r\n`)
+    
+    const ws = new WebSocket(wsUrl)
     
     ws.onopen = () => {
-      terminal.current?.writeln('Connected to log stream...\r\n')
+      terminal.current?.writeln('WebSocket connection established\r\n')
     }
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      if (data.error) {
-        terminal.current?.writeln(`\r\nError: ${data.error}`)
-        return
-      }
-      
-      // Handle carriage returns for progress updates
-      if (data.text.includes('\r') && !data.text.includes('\n')) {
-        terminal.current?.write('\r' + data.text)
-      } else {
-        terminal.current?.writeln(data.text)
+      try {
+        const data = JSON.parse(event.data)
+        if (data.error) {
+          terminal.current?.writeln(`\r\nError: ${data.error}`)
+          return
+        }
+        
+        // Handle carriage returns for progress updates
+        if (data.text.includes('\r') && !data.text.includes('\n')) {
+          terminal.current?.write('\r' + data.text)
+        } else {
+          terminal.current?.writeln(data.text)
+        }
+      } catch (error) {
+        console.error('Failed to parse message:', error, event.data)
+        terminal.current?.writeln(`\r\nError: Failed to parse message: ${event.data}`)
       }
     }
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error)
-      terminal.current?.writeln('\r\nError: WebSocket connection failed')
+      terminal.current?.writeln(`\r\nError: WebSocket connection failed (${error.type})`)
     }
 
-    ws.onclose = () => {
-      terminal.current?.writeln('\r\nLog stream disconnected')
+    ws.onclose = (event) => {
+      console.log('WebSocket closed:', event.code, event.reason)
+      terminal.current?.writeln(`\r\nLog stream disconnected (code: ${event.code}${event.reason ? `, reason: ${event.reason}` : ''})`)
     }
 
     return () => {

@@ -163,13 +163,24 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			CheckOrigin: func(r *http.Request) bool {
 				return true // Allow all origins in development
 			},
+			EnableCompression: true,
 		}
+
+		// Log headers for debugging
+		for k, v := range c.Request.Header {
+			c.Logger().Info("Header: ", k, v)
+		}
+
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upgrade connection"})
+			c.Logger().Error("WebSocket upgrade failed: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upgrade connection: " + err.Error()})
 			return
 		}
 		defer ws.Close()
+
+		// Set WebSocket read deadline to prevent hanging connections
+		ws.SetReadDeadline(time.Now().Add(24 * time.Hour))
 
 		// Create a channel for this client
 		clientChan := make(chan core.LogMessage, 100)
