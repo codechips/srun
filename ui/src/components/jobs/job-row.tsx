@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { JobStatusBadge } from "./job-status-badge";
 import { Button } from "@/components/ui/button";
@@ -21,8 +20,14 @@ interface JobRowProps {
   onRemove: (id: string) => void;
 }
 
-export function JobRow({ job, expanded, onExpand, onStop, onRestart, onRemove }: JobRowProps) {
-
+export function JobRow({
+  job,
+  expanded,
+  onExpand,
+  onStop,
+  onRestart,
+  onRemove,
+}: JobRowProps) {
   return (
     <>
       <TableRow
@@ -37,7 +42,11 @@ export function JobRow({ job, expanded, onExpand, onStop, onRestart, onRemove }:
         <TableCell className="font-mono">{job.id.slice(0, 8)}</TableCell>
         <TableCell className="font-mono">{job.pid}</TableCell>
         <TableCell>
-          <JobStatusBadge status={job.status as "completed" | "running" | "failed" | "stopped"} />
+          <JobStatusBadge
+            status={
+              job.status as "completed" | "running" | "failed" | "stopped"
+            }
+          />
         </TableCell>
         <TableCell className="font-mono">{job.command}</TableCell>
         <TableCell>{new Date(job.startedAt).toISOString()}</TableCell>
@@ -64,7 +73,9 @@ export function JobRow({ job, expanded, onExpand, onStop, onRestart, onRemove }:
               ) : (
                 <DropdownMenuItem onClick={() => onRestart(job.id)}>
                   <Play className="mr-2 h-4 w-4" />
-                  <span>{job.status === "failed" ? "Try Again" : "Restart"}</span>
+                  <span>
+                    {job.status === "failed" ? "Try Again" : "Restart"}
+                  </span>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem

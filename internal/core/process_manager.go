@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os/exec"
 	"srun/internal/ansi"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -245,7 +244,7 @@ func (pm *ProcessManager) flushLogs() {
 			end = len(logsToWrite)
 		}
 		batch := logsToWrite[i:end]
-		
+
 		if err := pm.Store.BatchWriteLogs(batch); err != nil {
 			fmt.Printf("Error writing logs: %v\n", err)
 		}

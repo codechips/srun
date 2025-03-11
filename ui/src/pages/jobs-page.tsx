@@ -1,5 +1,5 @@
-import { JobList } from "@/components/features/jobs/job-list"
-import { CreateJobDialog } from "@/components/features/jobs/create-job-dialog"
+import { JobList } from "@/components/jobs/job-list";
+import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
 
 export function JobsPage() {
   return (
@@ -10,5 +10,5 @@ export function JobsPage() {
       </div>
       <JobList />
     </div>
-  )
+  );
 }

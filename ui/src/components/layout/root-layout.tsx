@@ -1,4 +1,4 @@
-import { ReactNode } from "react"
+import type { ReactNode } from "react";
 
 export function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,17 +8,15 @@ export function RootLayout({ children }: { children: ReactNode }) {
           <div className="container max-w-7xl mx-auto flex h-14 items-center">
             <div className="mr-4 flex">
               <a className="mr-6 flex items-center space-x-2" href="/">
-                <span className="app-title text-xl">srun</span>
+                <span className="app-title text-2xl text-gray-700">srun</span>
               </a>
             </div>
           </div>
         </header>
         <main className="flex-1">
-          <div className="container max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="container max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
     </div>
-  )
+  );
 }
