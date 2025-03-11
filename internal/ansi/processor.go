@@ -14,8 +14,12 @@ type ProcessedLine struct {
 
 // Process preserves raw ANSI output and provides a clean version for logging
 func Process(line string) ProcessedLine {
+    // For plain text, replace both ANSI codes and carriage returns
+    plain := ansiRegex.ReplaceAllString(line, "")
+    plain = regexp.MustCompile("\r").ReplaceAllString(plain, "")
+
     return ProcessedLine{
-        Raw:   line,
-        Plain: ansiRegex.ReplaceAllString(line, ""), // Strip ANSI codes for plain text logging
+        Raw:   line,     // Keep original line with ANSI codes and carriage returns
+        Plain: plain,    // Strip both ANSI codes and carriage returns for logging
     }
 }
