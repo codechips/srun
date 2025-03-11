@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 	"srun/internal/ansi"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -103,7 +104,8 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
 	go func() {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
-			processed := ansi.Process(scanner.Text())
+			line := scanner.Text()
+			processed := ansi.Process(line)
 			msg := LogMessage{
 				JobID:   job.ID,
 				Text:    processed.Plain,
@@ -115,20 +117,24 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
 			job.LogBuffer.Value = processed.Raw
 			job.LogBuffer = job.LogBuffer.Next()
 
-			// Add to batch buffer
-			pm.logMu.Lock()
-			pm.logBuffer = append(pm.logBuffer, msg)
-			pm.logMu.Unlock()
-
-			// Send to real-time channel
+			// Send to real-time channel immediately
 			pm.LogChan <- msg
+
+			// If line contains carriage return, don't buffer it
+			if !strings.Contains(line, "\r") {
+				// Add to batch buffer only for non-progress lines
+				pm.logMu.Lock()
+				pm.logBuffer = append(pm.logBuffer, msg)
+				pm.logMu.Unlock()
+			}
 		}
 	}()
 
 	go func() {
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
-			processed := ansi.Process(scanner.Text())
+			line := scanner.Text()
+			processed := ansi.Process(line)
 			msg := LogMessage{
 				JobID:   job.ID,
 				Text:    processed.Plain,
@@ -140,13 +146,16 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
 			job.LogBuffer.Value = processed.Raw
 			job.LogBuffer = job.LogBuffer.Next()
 
-			// Add to batch buffer
-			pm.logMu.Lock()
-			pm.logBuffer = append(pm.logBuffer, msg)
-			pm.logMu.Unlock()
-
-			// Send to real-time channel
+			// Send to real-time channel immediately
 			pm.LogChan <- msg
+
+			// If line contains carriage return, don't buffer it
+			if !strings.Contains(line, "\r") {
+				// Add to batch buffer only for non-progress lines
+				pm.logMu.Lock()
+				pm.logBuffer = append(pm.logBuffer, msg)
+				pm.logMu.Unlock()
+			}
 		}
 	}()
 
