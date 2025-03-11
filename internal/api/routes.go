@@ -196,10 +196,7 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 
 		// Send historical logs
 		for _, log := range logs {
-			if err := ws.WriteJSON(gin.H{
-				"text": log.RawText,
-				"time": log.Time.Format(time.RFC3339),
-			}); err != nil {
+			if err := ws.WriteMessage(websocket.TextMessage, []byte(log.RawText)); err != nil {
 				return
 			}
 		}
@@ -227,10 +224,7 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			for {
 				select {
 				case msg := <-clientChan:
-					if err := ws.WriteJSON(gin.H{
-						"text": msg.RawText,
-						"time": msg.Time.Format(time.RFC3339),
-					}); err != nil {
+					if err := ws.WriteMessage(websocket.TextMessage, []byte(msg.RawText)); err != nil {
 						return
 					}
 				case <-c.Done():
