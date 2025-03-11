@@ -54,7 +54,7 @@ func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 
 		// Initialize empty response slice
 		response := make([]gin.H, 0)
-		
+
 		// Only process jobs if not nil
 		if jobs != nil {
 			// Convert jobs to response format
@@ -203,8 +203,6 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			if err := ws.WriteJSON(gin.H{
 				"text": log.RawText,
 				"time": log.Time.Format(time.RFC3339),
-				"styles": log.Styles,
-				"progress": log.Progress,
 			}); err != nil {
 				return
 			}
@@ -231,8 +229,6 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 					if err := ws.WriteJSON(gin.H{
 						"text": msg.RawText,
 						"time": msg.Time.Format(time.RFC3339),
-						"styles": msg.Styles,
-						"progress": msg.Progress,
 					}); err != nil {
 						return
 					}
