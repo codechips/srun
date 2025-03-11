@@ -33,20 +33,13 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        if (data.error) {
-          terminal.current?.writeln(`\r\nError: ${data.error}`);
-          return;
+        const { data } = event;
+        // Handle carriage returns for progress updates
+        if (data.includes("\r") && !data.includes("\n")) {
+          terminal.current?.write("\r" + data);
+        } else {
+          terminal.current?.writeln(data);
         }
-
-        terminal.current?.writeln(data.text);
-
-        // // Handle carriage returns for progress updates
-        // if (data.text.includes("\r") && !data.text.includes("\n")) {
-        //   terminal.current?.write("\r" + data.text);
-        // } else {
-        //   terminal.current?.writeln(data.text);
-        // }
       } catch (error) {
         console.error("Failed to parse message:", error, event.data);
         terminal.current?.writeln(
