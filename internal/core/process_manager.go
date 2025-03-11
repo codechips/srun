@@ -1,10 +1,10 @@
 package core
 
 import (
-	"bufio"
 	"container/ring"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"srun/internal/ansi"
 	"sync"
@@ -367,6 +367,49 @@ func (pm *ProcessManager) RemoveJob(id string) error {
 	}
 
 	return nil
+}
+
+func (pm *ProcessManager) handleOutput(r io.Reader, jobID string) {
+    buffer := make([]byte, 1024)
+    for {
+        n, err := r.Read(buffer)
+        if n > 0 {
+            output := string(buffer[:n])
+            processed := ansi.Process(output)
+            msg := LogMessage{
+                JobID:   jobID,
+                Text:    processed.Plain,
+                RawText: processed.Raw,
+                Time:    time.Now(),
+            }
+
+            // Send to WebSocket
+            select {
+            case pm.LogChan <- msg:
+            default:
+                fmt.Printf("Warning: LogChan buffer full, dropping message for job %s\n", jobID)
+            }
+
+            // Store in ring buffer and log buffer
+            pm.Mu.RLock()
+            job := pm.Jobs[jobID]
+            if job != nil {
+                job.LogBuffer.Value = processed.Raw
+                job.LogBuffer = job.LogBuffer.Next()
+            }
+            pm.Mu.RUnlock()
+
+            pm.logMu.Lock()
+            pm.logBuffer = append(pm.logBuffer, msg)
+            pm.logMu.Unlock()
+        }
+        if err != nil {
+            if err != io.EOF {
+                fmt.Printf("Error reading output: %v\n", err)
+            }
+            return
+        }
+    }
 }
 
 func (pm *ProcessManager) Cleanup() {
