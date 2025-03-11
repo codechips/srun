@@ -203,7 +203,7 @@ func NewProcessManager(store Storage) *ProcessManager {
 }
 
 func (pm *ProcessManager) startLogWriter() {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond) // Reduce to 100ms for more responsive updates
 	go func() {
 		for range ticker.C {
 			pm.flushLogs()
@@ -224,10 +224,18 @@ func (pm *ProcessManager) flushLogs() {
 	pm.logBuffer = pm.logBuffer[:0]
 	pm.logMu.Unlock()
 
-	// Write to storage
-	if err := pm.Store.BatchWriteLogs(logsToWrite); err != nil {
-		fmt.Printf("Error writing logs: %v\n", err)
-		// Could add retry logic here
+	// Write to storage in smaller batches for more frequent updates
+	batchSize := 10
+	for i := 0; i < len(logsToWrite); i += batchSize {
+		end := i + batchSize
+		if end > len(logsToWrite) {
+			end = len(logsToWrite)
+		}
+		batch := logsToWrite[i:end]
+		
+		if err := pm.Store.BatchWriteLogs(batch); err != nil {
+			fmt.Printf("Error writing logs: %v\n", err)
+		}
 	}
 }
 
