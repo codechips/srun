@@ -113,20 +113,22 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
 				Time:    time.Now(),
 			}
 
-			// Store in ring buffer
+			// Always send to WebSocket immediately
+			select {
+			case pm.LogChan <- msg:
+			default:
+				// Channel is full, log warning but continue
+				fmt.Printf("Warning: LogChan buffer full, dropping message for job %s\n", job.ID)
+			}
+
+			// Store in ring buffer for history
 			job.LogBuffer.Value = processed.Raw
 			job.LogBuffer = job.LogBuffer.Next()
 
-			// Send to real-time channel immediately
-			pm.LogChan <- msg
-
-			// If line contains carriage return, don't buffer it
-			if !strings.Contains(line, "\r") {
-				// Add to batch buffer only for non-progress lines
-				pm.logMu.Lock()
-				pm.logBuffer = append(pm.logBuffer, msg)
-				pm.logMu.Unlock()
-			}
+			// Buffer for database writes
+			pm.logMu.Lock()
+			pm.logBuffer = append(pm.logBuffer, msg)
+			pm.logMu.Unlock()
 		}
 	}()
 
@@ -142,20 +144,22 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
 				Time:    time.Now(),
 			}
 
-			// Store in ring buffer
+			// Always send to WebSocket immediately
+			select {
+			case pm.LogChan <- msg:
+			default:
+				// Channel is full, log warning but continue
+				fmt.Printf("Warning: LogChan buffer full, dropping message for job %s\n", job.ID)
+			}
+
+			// Store in ring buffer for history
 			job.LogBuffer.Value = processed.Raw
 			job.LogBuffer = job.LogBuffer.Next()
 
-			// Send to real-time channel immediately
-			pm.LogChan <- msg
-
-			// If line contains carriage return, don't buffer it
-			if !strings.Contains(line, "\r") {
-				// Add to batch buffer only for non-progress lines
-				pm.logMu.Lock()
-				pm.logBuffer = append(pm.logBuffer, msg)
-				pm.logMu.Unlock()
-			}
+			// Buffer for database writes
+			pm.logMu.Lock()
+			pm.logBuffer = append(pm.logBuffer, msg)
+			pm.logMu.Unlock()
 		}
 	}()
 

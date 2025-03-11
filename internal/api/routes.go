@@ -187,18 +187,14 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		// Set WebSocket read deadline to prevent hanging connections
 		ws.SetReadDeadline(time.Now().Add(24 * time.Hour))
 
-		// Create a channel for this client
-		clientChan := make(chan core.LogMessage, 100)
-		defer close(clientChan)
-
-		// Get historical logs
+		// Get historical logs first
 		logs, err := pm.Store.GetJobLogs(id)
 		if err != nil {
 			ws.WriteJSON(gin.H{"error": "Failed to get logs: " + err.Error()})
 			return
 		}
 
-		// Send historical logs first
+		// Send historical logs
 		for _, log := range logs {
 			if err := ws.WriteJSON(gin.H{
 				"text": log.RawText,
@@ -208,21 +204,26 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			}
 		}
 
-		// Subscribe to log channel if job is still running
+		// If job is running, subscribe to real-time logs
 		if job.Status == "running" {
+			// Create buffered channel for this client
+			clientChan := make(chan core.LogMessage, 100)
+			defer close(clientChan)
+
+			// Start goroutine to forward messages from LogChan to client
 			go func() {
 				for msg := range pm.LogChan {
 					if msg.JobID == id {
 						select {
 						case clientChan <- msg:
 						default:
-							// Drop message if channel is full
+							// Drop message if client is slow
 						}
 					}
 				}
 			}()
 
-			// Stream logs until connection closes
+			// Read from client channel and send to WebSocket
 			for {
 				select {
 				case msg := <-clientChan:
