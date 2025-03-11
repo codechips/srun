@@ -100,67 +100,8 @@ func (pm *ProcessManager) StartJob(command string) (*Job, error) {
 	}()
 
 	// Handle command output in goroutines
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			line := scanner.Text()
-			processed := ansi.Process(line)
-			msg := LogMessage{
-				JobID:   job.ID,
-				Text:    processed.Plain,
-				RawText: processed.Raw,
-				Time:    time.Now(),
-			}
-
-			// Always send to WebSocket immediately
-			select {
-			case pm.LogChan <- msg:
-			default:
-				// Channel is full, log warning but continue
-				fmt.Printf("Warning: LogChan buffer full, dropping message for job %s\n", job.ID)
-			}
-
-			// Store in ring buffer for history
-			job.LogBuffer.Value = processed.Raw
-			job.LogBuffer = job.LogBuffer.Next()
-
-			// Buffer for database writes
-			pm.logMu.Lock()
-			pm.logBuffer = append(pm.logBuffer, msg)
-			pm.logMu.Unlock()
-		}
-	}()
-
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			line := scanner.Text()
-			processed := ansi.Process(line)
-			msg := LogMessage{
-				JobID:   job.ID,
-				Text:    processed.Plain,
-				RawText: processed.Raw,
-				Time:    time.Now(),
-			}
-
-			// Always send to WebSocket immediately
-			select {
-			case pm.LogChan <- msg:
-			default:
-				// Channel is full, log warning but continue
-				fmt.Printf("Warning: LogChan buffer full, dropping message for job %s\n", job.ID)
-			}
-
-			// Store in ring buffer for history
-			job.LogBuffer.Value = processed.Raw
-			job.LogBuffer = job.LogBuffer.Next()
-
-			// Buffer for database writes
-			pm.logMu.Lock()
-			pm.logBuffer = append(pm.logBuffer, msg)
-			pm.logMu.Unlock()
-		}
-	}()
+	go pm.handleOutput(stdout, job.ID)
+	go pm.handleOutput(stderr, job.ID)
 
 	// Monitor command completion
 	go func() {
