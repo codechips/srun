@@ -61,7 +61,7 @@ export function CreateJobDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[850px]">
         <DialogHeader>
-          <DialogTitle>{initialCommand ? 'Edit Job' : 'Create New Job'}</DialogTitle>
+          <DialogTitle>{initialCommand.trim() ? 'Edit Job' : 'Create New Job'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
