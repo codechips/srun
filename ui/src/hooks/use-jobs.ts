@@ -77,8 +77,10 @@ export function useJobActions() {
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/jobs/${id}/restart`, { method: 'POST' })
       if (!response.ok) throw new Error('Failed to restart job')
+      return response.json()
     },
-    onSuccess: () => {
+    onSuccess: (data, id) => {
+      queryClient.setQueryData(['jobs', id], data)
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       toast.success('Job restarted successfully')
     },
