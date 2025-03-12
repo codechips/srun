@@ -1,4 +1,4 @@
 .aider*
-srun
+./srun
 *.db
 /static
