@@ -43,17 +43,31 @@ func main() {
 
 	// Create a filesystem handler for the embedded files
 	staticFS := http.FS(static.StaticFiles)
-	// fileServer := http.FileServer(staticFS)
+	fileServer := http.FileServer(staticFS)
 
 	// Serve static files
 	r.GET("/", func(c *gin.Context) {
+		// Prevent Gin from adding a trailing slash
+		if c.Request.URL.Path != "/" {
+			c.Redirect(http.StatusMovedPermanently, "/")
+			return
+		}
 		c.FileFromFS("index.html", staticFS)
 	})
 
-	// r.GET("/assets/*filepath", func(c *gin.Context) {
-	// 	c.Request.URL.Path = c.Param("filepath")
-	// 	fileServer.ServeHTTP(c.Writer, c.Request)
-	// })
+	// Handle other static files
+	r.GET("/vite.svg", func(c *gin.Context) {
+		c.FileFromFS("vite.svg", staticFS)
+	})
+	r.GET("/assets/*filepath", func(c *gin.Context) {
+		c.Request.URL.Path = c.Param("filepath")
+		fileServer.ServeHTTP(c.Writer, c.Request)
+	})
+
+	// All other routes fall back to index.html for client-side routing
+	r.NoRoute(func(c *gin.Context) {
+		c.FileFromFS("index.html", staticFS)
+	})
 
 	r.Run(":" + port)
 }
