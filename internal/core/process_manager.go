@@ -148,7 +148,7 @@ func NewProcessManager(store Storage) *ProcessManager {
 	pm := &ProcessManager{
 		Jobs:      make(map[string]*Job),
 		Store:     store,
-		LogChan:   make(chan LogMessage, 100),
+		LogChan:   make(chan LogMessage, 1000),
 		logBuffer: make([]LogMessage, 0, 1000),
 	}
 	pm.startLogWriter()
@@ -156,7 +156,7 @@ func NewProcessManager(store Storage) *ProcessManager {
 }
 
 func (pm *ProcessManager) startLogWriter() {
-	ticker := time.NewTicker(100 * time.Millisecond) // Reduce to 100ms for more responsive updates
+	ticker := time.NewTicker(50 * time.Millisecond) // Reduce to 50ms for more responsive updates
 	go func() {
 		for range ticker.C {
 			pm.flushLogs()
@@ -316,7 +316,7 @@ func (pm *ProcessManager) RemoveJob(id string) error {
 }
 
 func (pm *ProcessManager) handleOutput(r io.Reader, jobID string) {
-    buffer := make([]byte, 1024)
+    buffer := make([]byte, 4096)
     for {
         n, err := r.Read(buffer)
         if n > 0 {

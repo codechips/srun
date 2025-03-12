@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"srun/internal/core"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -40,6 +41,14 @@ func removeJobHandler(pm *core.ProcessManager) gin.HandlerFunc {
 			"message": "Job removed successfully",
 		})
 	}
+}
+
+func sendBatch(ws *websocket.Conn, batch []core.LogMessage) {
+	var combined strings.Builder
+	for _, msg := range batch {
+		combined.WriteString(msg.RawText)
+	}
+	ws.WriteMessage(websocket.TextMessage, []byte(combined.String()))
 }
 
 func listJobsHandler(pm *core.ProcessManager) gin.HandlerFunc {
@@ -204,33 +213,38 @@ func streamLogsHandler(pm *core.ProcessManager) gin.HandlerFunc {
 		// If job is running, subscribe to real-time logs
 		if job.Status == "running" {
 			// Create buffered channel for this client
-			clientChan := make(chan core.LogMessage, 100)
+			clientChan := make(chan core.LogMessage, 1000)
 			defer close(clientChan)
 
 			// Start goroutine to forward messages from LogChan to client
 			go func() {
-				for msg := range pm.LogChan {
-					if msg.JobID == id {
-						select {
-						case clientChan <- msg:
-						default:
-							// Drop message if client is slow
+				batch := make([]core.LogMessage, 0, 10)
+				ticker := time.NewTicker(10 * time.Millisecond)
+				defer ticker.Stop()
+
+				for {
+					select {
+					case msg := <-pm.LogChan:
+						if msg.JobID == id {
+							batch = append(batch, msg)
+							if len(batch) >= 10 {
+								sendBatch(ws, batch)
+								batch = batch[:0]
+							}
 						}
+					case <-ticker.C:
+						if len(batch) > 0 {
+							sendBatch(ws, batch)
+							batch = batch[:0]
+						}
+					case <-c.Done():
+						return
 					}
 				}
 			}()
 
-			// Read from client channel and send to WebSocket
-			for {
-				select {
-				case msg := <-clientChan:
-					if err := ws.WriteMessage(websocket.TextMessage, []byte(msg.RawText)); err != nil {
-						return
-					}
-				case <-c.Done():
-					return
-				}
-			}
+			// Wait for context done
+			<-c.Done()
 		}
 	}
 }
