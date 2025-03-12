@@ -45,13 +45,16 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.FileFromFS("index.html", http.FS(static.StaticFiles))
 	})
+	// Handle vite.svg favicon
+	r.GET("/vite.svg", func(c *gin.Context) {
+		c.FileFromFS("vite.svg", http.FS(static.StaticFiles))
+	})
+	// Handle all assets
+	r.GET("/assets/*filepath", func(c *gin.Context) {
+		c.FileFromFS("assets/"+c.Param("filepath"), http.FS(static.StaticFiles))
+	})
+	// All other routes fall back to index.html for client-side routing
 	r.NoRoute(func(c *gin.Context) {
-		// Try to serve static file
-		if _, err := static.StaticFiles.Open(c.Request.URL.Path[1:]); err == nil {
-			c.FileFromFS(c.Request.URL.Path[1:], http.FS(static.StaticFiles))
-			return
-		}
-		// Fall back to index.html for client-side routing
 		c.FileFromFS("index.html", http.FS(static.StaticFiles))
 	})
 
