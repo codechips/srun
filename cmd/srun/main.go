@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 	"os"
 	"srun/internal/api"
 	"srun/internal/core"
+	"srun/internal/static"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,6 +37,23 @@ func main() {
 	}
 
 	r := gin.Default()
+	
+	// API routes
 	api.SetupRoutes(r, pm)
+
+	// Serve static files
+	r.GET("/", func(c *gin.Context) {
+		c.FileFromFS("index.html", http.FS(static.StaticFiles))
+	})
+	r.NoRoute(func(c *gin.Context) {
+		// Try to serve static file
+		if _, err := static.StaticFiles.Open(c.Request.URL.Path[1:]); err == nil {
+			c.FileFromFS(c.Request.URL.Path[1:], http.FS(static.StaticFiles))
+			return
+		}
+		// Fall back to index.html for client-side routing
+		c.FileFromFS("index.html", http.FS(static.StaticFiles))
+	})
+
 	r.Run(":" + port)
 }
