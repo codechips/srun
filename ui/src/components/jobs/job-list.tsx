@@ -71,8 +71,8 @@ export function JobList({ onEditJob }: JobListProps) {
 
   const handleRestart = (id: string) => {
     restartJob.mutate(id, {
-      onSuccess: () => {
-        setExpandedJobId(id);
+      onSuccess: (newJob) => {
+        setExpandedJobId(newJob.id);
       }
     });
   };
