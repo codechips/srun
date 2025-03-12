@@ -41,21 +41,24 @@ func main() {
 	// API routes
 	api.SetupRoutes(r, pm)
 
+	// Create a filesystem handler for the embedded files
+	staticFS := http.FS(static.StaticFiles)
+	fileServer := http.FileServer(staticFS)
+
 	// Serve static files
 	r.GET("/", func(c *gin.Context) {
-		c.FileFromFS("index.html", http.FS(static.StaticFiles))
+		c.FileFromFS("index.html", staticFS)
 	})
-	// Handle vite.svg favicon
 	r.GET("/vite.svg", func(c *gin.Context) {
-		c.FileFromFS("vite.svg", http.FS(static.StaticFiles))
+		c.FileFromFS("vite.svg", staticFS)
 	})
-	// Handle all assets
 	r.GET("/assets/*filepath", func(c *gin.Context) {
-		c.FileFromFS("assets/"+c.Param("filepath"), http.FS(static.StaticFiles))
+		c.Request.URL.Path = c.Param("filepath")
+		fileServer.ServeHTTP(c.Writer, c.Request)
 	})
 	// All other routes fall back to index.html for client-side routing
 	r.NoRoute(func(c *gin.Context) {
-		c.FileFromFS("index.html", http.FS(static.StaticFiles))
+		c.FileFromFS("index.html", staticFS)
 	})
 
 	r.Run(":" + port)
