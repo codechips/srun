@@ -56,9 +56,6 @@ export function CreateJobDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {!open && <Button>New Job</Button>}
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[850px]">
         <DialogHeader>
           <DialogTitle>{initialCommand.trim() ? 'Edit Job' : 'Create New Job'}</DialogTitle>
