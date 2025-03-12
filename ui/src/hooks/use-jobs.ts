@@ -31,7 +31,7 @@ export function useJob(id: string, enabled: boolean = true) {
       return response.json();
     },
     enabled,
-    refetchInterval: (data) => (data?.status === "running" ? 5000 : false),
+    refetchInterval: (data) => (data?.data?.status === "running" ? 5000 : false),
   });
 }
 

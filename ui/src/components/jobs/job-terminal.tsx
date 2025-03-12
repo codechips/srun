@@ -8,7 +8,7 @@ interface JobTerminalProps {
 
 export function JobTerminal({ jobId }: JobTerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
-  const terminal = useRef<Terminal>();
+  const terminal = useRef<Terminal | null>(null);
 
   useEffect(() => {
     if (!terminalRef.current) return;
