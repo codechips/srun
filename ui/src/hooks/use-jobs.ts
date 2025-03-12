@@ -105,8 +105,8 @@ export function useJobActions() {
   })
 
   return {
-    stopJob: stopJob.mutate,
-    restartJob: restartJob.mutate,
-    removeJob: removeJob.mutate,
+    stopJob,
+    restartJob,
+    removeJob,
   }
 }

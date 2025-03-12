@@ -70,8 +70,11 @@ export function JobList({ onEditJob }: JobListProps) {
   const { stopJob, restartJob, removeJob } = useJobActions();
 
   const handleRestart = (id: string) => {
-    restartJob(id);
-    setExpandedJobId(id);
+    restartJob.mutate(id, {
+      onSuccess: () => {
+        setExpandedJobId(id);
+      }
+    });
   };
 
   const handleJobCreated = (id: string) => {
@@ -104,9 +107,9 @@ export function JobList({ onEditJob }: JobListProps) {
               job={job}
               expanded={expandedJobId === job.id}
               onExpand={setExpandedJobId}
-              onStop={stopJob}
+              onStop={stopJob.mutate}
               onRestart={handleRestart}
-              onRemove={removeJob}
+              onRemove={removeJob.mutate}
               onEdit={onEditJob}
             />
           ))}
