@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { JobList } from "@/components/jobs/job-list";
 import { CreateJobDialog } from "@/components/jobs/create-job-dialog";
 

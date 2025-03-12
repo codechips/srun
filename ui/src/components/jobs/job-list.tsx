@@ -96,7 +96,7 @@ export function JobList({ onEditJob }: JobListProps) {
             onStop={stopJob}
             onRestart={restartJob}
             onRemove={removeJob}
-            onEdit={(command) => setEditCommand(command)}
+            onEdit={onEditJob}
           />
         ))}
       </TableBody>

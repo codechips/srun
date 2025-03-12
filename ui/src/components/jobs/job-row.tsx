@@ -28,6 +28,7 @@ export function JobRow({
   onStop,
   onRestart,
   onRemove,
+  onEdit,
 }: JobRowProps) {
   return (
     <>
