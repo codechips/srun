@@ -69,12 +69,23 @@ export function JobList({ onEditJob }: JobListProps) {
   const { data: jobs, isLoading } = useJobs();
   const { stopJob, restartJob, removeJob } = useJobActions();
 
+  const handleRestart = (id: string) => {
+    restartJob(id);
+    setExpandedJobId(id);
+  };
+
+  const handleJobCreated = (id: string) => {
+    setExpandedJobId(id);
+  };
+
   if (isLoading) {
     return <LoadingTable />;
   }
 
   return (
-    <Table>
+    <>
+      <CreateJobDialog onJobCreated={handleJobCreated} />
+      <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[100px]">ID</TableHead>
@@ -94,7 +105,7 @@ export function JobList({ onEditJob }: JobListProps) {
             expanded={expandedJobId === job.id}
             onExpand={setExpandedJobId}
             onStop={stopJob}
-            onRestart={restartJob}
+            onRestart={handleRestart}
             onRemove={removeJob}
             onEdit={onEditJob}
           />

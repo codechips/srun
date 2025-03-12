@@ -42,8 +42,8 @@ export function CreateJobDialog({
       onSuccess: (data) => {
         toast.success("Job created successfully");
         onOpenChange?.(false);
-        onJobCreated?.(data.id);
         setCommand("");
+        onJobCreated?.(data.id);
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] });
         }, 1000);
