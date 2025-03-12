@@ -14,21 +14,35 @@ import { toast } from "sonner";
 
 interface CreateJobDialogProps {
   onJobCreated?: (jobId: string) => void;
+  initialCommand?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateJobDialog({ onJobCreated }: CreateJobDialogProps) {
-  const [command, setCommand] = useState("");
-  const [open, setOpen] = useState(false);
+export function CreateJobDialog({ 
+  onJobCreated, 
+  initialCommand = "", 
+  open, 
+  onOpenChange 
+}: CreateJobDialogProps) {
+  const [command, setCommand] = useState(initialCommand);
   const createJob = useCreateJob();
   const queryClient = useQueryClient();
+
+  // Reset command when dialog opens with new initialCommand
+  useEffect(() => {
+    if (open) {
+      setCommand(initialCommand);
+    }
+  }, [open, initialCommand]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createJob.mutate(command, {
       onSuccess: (data) => {
         toast.success("Job created successfully");
+        onOpenChange?.(false);
         onJobCreated?.(data.id);
-        setOpen(false);
         setCommand("");
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ['jobs'] });
@@ -41,13 +55,13 @@ export function CreateJobDialog({ onJobCreated }: CreateJobDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>New Job</Button>
+        {!open && <Button>New Job</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[850px]">
         <DialogHeader>
-          <DialogTitle>Create New Job</DialogTitle>
+          <DialogTitle>{initialCommand ? 'Edit Job' : 'Create New Job'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -61,7 +75,7 @@ export function CreateJobDialog({ onJobCreated }: CreateJobDialogProps) {
             />
           </div>
           <Button type="submit" disabled={!command.trim()}>
-            Create Job
+            {initialCommand ? 'Update & Run' : 'Create Job'}
           </Button>
         </form>
       </DialogContent>

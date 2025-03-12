@@ -1,7 +1,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { JobStatusBadge } from "./job-status-badge";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Play, Square, Trash } from "lucide-react";
+import { MoreVertical, Play, Square, Trash, Pencil } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,7 @@ interface JobRowProps {
   onStop: (id: string) => void;
   onRestart: (id: string) => void;
   onRemove: (id: string) => void;
+  onEdit: (command: string) => void;
 }
 
 export function JobRow({
@@ -71,12 +72,18 @@ export function JobRow({
                   <span>Stop</span>
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => onRestart(job.id)}>
-                  <Play className="mr-2 h-4 w-4" />
-                  <span>
-                    {job.status === "failed" ? "Try Again" : "Restart"}
-                  </span>
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem onClick={() => onEdit(job.command)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span>Edit & Run</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onRestart(job.id)}>
+                    <Play className="mr-2 h-4 w-4" />
+                    <span>
+                      {job.status === "failed" ? "Try Again" : "Restart"}
+                    </span>
+                  </DropdownMenuItem>
+                </>
               )}
               <DropdownMenuItem
                 onClick={() => onRemove(job.id)}

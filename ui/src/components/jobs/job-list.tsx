@@ -60,16 +60,14 @@ function LoadingTable() {
   );
 }
 
-export function JobList() {
+interface JobListProps {
+  onEditJob: (command: string) => void;
+}
+
+export function JobList({ onEditJob }: JobListProps) {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const [editCommand, setEditCommand] = useState<string | null>(null);
   const { data: jobs, isLoading } = useJobs();
   const { stopJob, restartJob, removeJob } = useJobActions();
-
-  const handleJobCreated = (jobId: string) => {
-    setExpandedJobId(jobId);
-    setEditCommand(null);
-  };
 
   if (isLoading) {
     return <LoadingTable />;
