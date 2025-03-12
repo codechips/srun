@@ -238,31 +238,36 @@ func (pm *ProcessManager) StopJob(id string) error {
 }
 
 func (pm *ProcessManager) RestartJob(id string) (*Job, error) {
-	pm.Mu.Lock()
-	oldJob, exists := pm.Jobs[id]
-	pm.Mu.Unlock()
+    pm.Mu.Lock()
+    oldJob, exists := pm.Jobs[id]
+    pm.Mu.Unlock()
 
-	if !exists {
-		return nil, fmt.Errorf("job not found: %s", id)
-	}
+    if !exists {
+        // Try to get the job from storage if it's not in memory
+        var err error
+        oldJob, err = pm.Store.GetJob(id)
+        if err != nil {
+            return nil, fmt.Errorf("failed to get job: %w", err)
+        }
+        if oldJob == nil {
+            return nil, fmt.Errorf("job not found: %s", id)
+        }
+    }
 
-	// Stop the old job if it's still running
-	if oldJob.Status == "running" {
-		if err := pm.StopJob(id); err != nil {
-			return nil, fmt.Errorf("failed to stop old job: %w", err)
-		}
-	}
+    // Stop the old job if it's still running
+    if oldJob.Status == "running" {
+        if err := pm.StopJob(id); err != nil {
+            return nil, fmt.Errorf("failed to stop old job: %w", err)
+        }
+    }
 
-	// Get the original command from the old job's Cmd
-	originalCmd := oldJob.Cmd.Args[2] // Skip "sh" and "-c"
+    // Start a new job with the same command
+    newJob, err := pm.StartJob(oldJob.Command)
+    if err != nil {
+        return nil, fmt.Errorf("failed to restart job: %w", err)
+    }
 
-	// Start a new job with the same command
-	newJob, err := pm.StartJob(originalCmd)
-	if err != nil {
-		return nil, fmt.Errorf("failed to restart job: %w", err)
-	}
-
-	return newJob, nil
+    return newJob, nil
 }
 
 func (pm *ProcessManager) GetJobLogs(id string) []string {
