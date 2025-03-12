@@ -50,7 +50,14 @@ export function JobRow({
             }
           />
         </TableCell>
-        <TableCell className="font-mono">{job.command}</TableCell>
+        <TableCell className="font-mono max-w-md">
+          <div 
+            className="truncate" 
+            title={job.command}
+          >
+            {job.command}
+          </div>
+        </TableCell>
         <TableCell>{new Date(job.startedAt).toISOString()}</TableCell>
         <TableCell>
           {job.status === "running"
