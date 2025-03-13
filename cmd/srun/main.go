@@ -88,7 +88,7 @@ func main() {
 
 	r := gin.Default()
 
-	// API routes
+	// API routes first
 	api.SetupRoutes(r, pm)
 
 	// Create a filesystem handler for the embedded files
@@ -96,7 +96,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Serve static files
+
+	// Static file handlers in specific order
+	// 1. Root path
 	r.GET("/", func(c *gin.Context) {
 		data, err := fs.ReadFile(distFS, "index.html")
 		if err != nil {
@@ -106,16 +108,11 @@ func main() {
 		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 	})
 
-	// Handler for serving assets folder and other static files
+	// 2. Assets directory
 	r.GET("/assets/*filepath", func(c *gin.Context) {
-		// Extract the path after "/assets/"
 		filepath := c.Param("filepath")
-		// Remove leading slash if present
 		filepath = strings.TrimPrefix(filepath, "/")
 		path := "assets/" + filepath
-
-		// Debug output
-		println("Requested asset path:", path)
 
 		data, err := fs.ReadFile(distFS, path)
 		if err != nil {
@@ -135,38 +132,24 @@ func main() {
 		c.Data(http.StatusOK, contentType, data)
 	})
 
-	// Catch-all handler for other paths (like favicon, etc.)
-	r.GET("/*filepath", func(c *gin.Context) {
-		filepath := c.Param("filepath")
-		path := strings.TrimPrefix(filepath, "/")
-
-		// Skip if this is an assets path (already handled above)
-		if strings.HasPrefix(path, "assets/") {
-			return
-		}
-
-		// Try to serve the file directly
-		data, err := fs.ReadFile(distFS, path)
+	// 3. Specific static files (like nazar.svg)
+	r.GET("/nazar.svg", func(c *gin.Context) {
+		data, err := fs.ReadFile(distFS, "nazar.svg")
 		if err != nil {
-			// If file doesn't exist, serve index.html for SPA support
-			data, err := fs.ReadFile(distFS, "index.html")
-			if err != nil {
-				c.String(http.StatusInternalServerError, "Could not load index.html")
-				return
-			}
-			c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+			c.String(http.StatusNotFound, "File not found")
 			return
 		}
+		c.Data(http.StatusOK, "image/svg+xml", data)
+	})
 
-		// Set appropriate content type
-		contentType := "application/octet-stream"
-		if strings.HasSuffix(path, ".svg") {
-			contentType = "image/svg+xml"
-		} else if strings.HasSuffix(path, ".ico") {
-			contentType = "image/x-icon"
+	// 4. Finally, catch-all for SPA routes
+	r.NoRoute(func(c *gin.Context) {
+		data, err := fs.ReadFile(distFS, "index.html")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Could not load index.html")
+			return
 		}
-
-		c.Data(http.StatusOK, contentType, data)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 	})
 
 	r.Run(":" + port)
