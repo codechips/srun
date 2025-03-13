@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,11 +18,11 @@ interface CreateJobDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateJobDialog({ 
-  onJobCreated, 
-  initialCommand = "", 
-  open, 
-  onOpenChange 
+export function CreateJobDialog({
+  onJobCreated,
+  initialCommand = "",
+  open,
+  onOpenChange,
 }: CreateJobDialogProps) {
   const [command, setCommand] = useState(initialCommand);
   const createJob = useCreateJob();
@@ -45,7 +44,7 @@ export function CreateJobDialog({
         setCommand("");
         onJobCreated?.(data.id);
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['jobs'] });
+          queryClient.invalidateQueries({ queryKey: ["jobs"] });
         }, 1000);
       },
       onError: (error) => {
@@ -58,7 +57,9 @@ export function CreateJobDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[850px]">
         <DialogHeader>
-          <DialogTitle>{initialCommand.trim() ? 'Edit Job' : 'Create New Job'}</DialogTitle>
+          <DialogTitle>
+            {initialCommand.trim() ? "Edit Job" : "Create New Job"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -72,7 +73,7 @@ export function CreateJobDialog({
             />
           </div>
           <Button type="submit" disabled={!command.trim()}>
-            {initialCommand ? 'Update & Run' : 'Create Job'}
+            {initialCommand ? "Update & Run" : "Create Job"}
           </Button>
         </form>
       </DialogContent>

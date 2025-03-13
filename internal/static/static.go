@@ -2,5 +2,5 @@ package static
 
 import "embed"
 
-//go:embed *
+//go:embed dist
 var StaticFiles embed.FS
