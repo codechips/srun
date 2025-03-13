@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Footer } from "./footer";
 
 export function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -13,9 +14,10 @@ export function RootLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="flex-1">
+        <main className="flex-1 pb-16">
           <div className="container max-w-7xl mx-auto">{children}</div>
         </main>
+        <Footer />
       </div>
     </div>
   );
