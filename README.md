@@ -7,12 +7,12 @@ The name *srun* stands for **s**cript **run**ner (but is also an obscene curse w
 
 Script and command execution system with web interface featuring:
 
-✅ Real-time ANSI-compatible terminal output
-🗄️ SQLite-backed job persistence
-🔒 Mutex-protected concurrent access
-🔄 Ring buffer log storage (1000 entries)
-🌐 WebSocket-based log streaming
-📦 Single-binary deployment
+- ✅ Real-time ANSI-compatible terminal output
+- 🗄️ SQLite-backed job persistence
+- 🔒 Mutex-protected concurrent access
+- 🔄 Ring buffer log storage (1000 entries)
+- 🌐 WebSocket-based log streaming
+- 📦 Single-binary deployment
 
 ## Installation
 
