@@ -1,4 +1,4 @@
 .aider*
 ./srun
 *.db
-/static
+internal/static/dist
