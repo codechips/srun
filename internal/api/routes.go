@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"srun/internal/core"
+	"srun/internal/version"
 	"strings"
 	"time"
 
@@ -15,6 +16,11 @@ type CreateJobRequest struct {
 }
 
 func SetupRoutes(r *gin.Engine, pm *core.ProcessManager) {
+	// Version endpoint
+	r.GET("/api/version", func(c *gin.Context) {
+		c.JSON(http.StatusOK, version.GetInfo())
+	})
+
 	// Job management endpoints
 	r.POST("/api/jobs", createJobHandler(pm))
 	r.GET("/api/jobs", listJobsHandler(pm))

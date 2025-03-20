@@ -1,8 +1,12 @@
+import { useVersion } from "@/hooks/use-version";
+
 export function Footer() {
+  const { data: version } = useVersion();
+
   return (
     <footer className="bg-background border-t py-3">
       <div className="container max-w-7xl mx-auto text-sm text-muted-foreground">
-        MIT License · commit: {import.meta.env.VITE_GIT_COMMIT || "development"}
+        MIT License · v{version?.version || "dev"} ({version?.gitCommit || "unknown"})
       </div>
     </footer>
   );

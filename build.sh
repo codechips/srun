@@ -11,4 +11,12 @@ rm -rf internal/static/dist
 cp -r ui/dist internal/static/
 
 echo "Building Go binary..."
-go build -o srun cmd/srun/main.go
+VERSION=$(git describe --tags --always --dirty)
+COMMIT=$(git rev-parse --short HEAD)
+BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S')
+
+go build -o srun \
+  -ldflags "-X srun/internal/version.Version=$VERSION \
+            -X srun/internal/version.GitCommit=$COMMIT \
+            -X srun/internal/version.BuildDate=$BUILD_DATE" \
+  cmd/srun/main.go
