@@ -39,3 +39,7 @@ changelog:
       - "^chore:"
       - Merge pull request
       - Merge branch
+  use: git
+  format: markdown
+  mode: prepend
+  file: CHANGELOG.md
