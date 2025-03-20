@@ -169,5 +169,7 @@ func main() {
 		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 	})
 
+	log.Printf("Starting server on port %s", port)
+	log.Printf("Using database at: %s", dbPath)
 	r.Run(":" + port)
 }
