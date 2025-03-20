@@ -43,6 +43,17 @@ SRUN_PORT=8080 ./srun
 
 Access the web UI at `http://localhost:8080`
 
+## CLI Flags
+| Flag          | Default                              | Description                                                                 |
+|---------------|--------------------------------------|-----------------------------------------------------------------------------|
+| `-port`       | `8000`                               | HTTP server port (also via `SRUN_PORT` environment variable)                |
+| `-db`         | Platform-specific config directory*  | SQLite database path (auto-created if missing)                              |
+
+*Default database locations:  
+- **Linux**: `$HOME/.config/srun/srun.db`  
+- **macOS**: `$HOME/Library/Application Support/srun/srun.db`  
+- **Windows**: `%APPDATA%\srun\srun.db`  
+
 ## Process Management (from process_manager.go)
 - Job lifecycle management with PID tracking
 - Automatic process cleanup on termination
