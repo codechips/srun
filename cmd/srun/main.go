@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"srun/internal/api"
+	"path/filepath"
 	"srun/internal/core"
 	"srun/internal/static"
 
@@ -15,6 +16,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func defaultDBPath() string {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Printf("Warning: Couldn't get user config directory: %v", err)
+		return "srun.db"
+	}
+	
+	appDir := filepath.Join(configDir, "srun")
+	if err := os.MkdirAll(appDir, 0700); err != nil {
+		log.Printf("Warning: Couldn't create application directory: %v", err)
+		return "srun.db"
+	}
+	
+	return filepath.Join(appDir, "srun.db")
+}
+
+var dbPath string
+var port string
 
 func ListFilesHandler(c *gin.Context) {
 	// Create a string builder to collect the file listing
@@ -63,7 +83,12 @@ func ListFilesHandler(c *gin.Context) {
 }
 
 func main() {
-	store, err := core.NewSQLiteStorage("srun.db")
+	// Configure flags
+	flag.StringVar(&port, "port", "8000", "Port to listen on")
+	flag.StringVar(&dbPath, "db", defaultDBPath(), "SQLite database path")
+	flag.Parse()
+
+	store, err := core.NewSQLiteStorage(dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,16 +99,8 @@ func main() {
 		LogChan: make(chan core.LogMessage, 1000),
 	}
 
-	// Port configuration with flag and env var
-	var port string
-	flag.StringVar(&port, "port", "8000", "Port to listen on")
-	flag.Parse()
-
-	// Check environment variable if flag not set
-	if port == "" {
-		if envPort := os.Getenv("SRUN_PORT"); envPort != "" {
-			port = envPort
-		}
+	if envPort := os.Getenv("SRUN_PORT"); port == "" && envPort != "" {
+		port = envPort
 	}
 
 	r := gin.Default()

@@ -267,5 +267,10 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
         return nil, fmt.Errorf("migration failed: %w", err)
     }
 
+    // Set proper permissions
+    if err := os.Chmod(dbPath, 0600); err != nil {
+        return nil, fmt.Errorf("failed to set database permissions: %w", err)
+    }
+
     return &SQLiteStorage{db: db}, nil
 }
