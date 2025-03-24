@@ -26,3 +26,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Added by goreleaser init:
+dist/
