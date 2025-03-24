@@ -14,13 +14,15 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/yourusername/srun/internal/version.Version={{.Version}}
-      - -X github.com/yourusername/srun/internal/version.GitCommit={{.Commit}}
-      - -X github.com/yourusername/srun/internal/version.BuildDate={{.Date}}
+      - -X github.com/codechips/srun/internal/version.Version={{.Version}}
+      - -X github.com/codechips/srun/internal/version.GitCommit={{.Commit}}
+      - -X github.com/codechips/srun/internal/version.BuildDate={{.Date}}
     main: ./cmd/srun
 
 archives:
   - formats: ["tar.gz"]
+    files:
+      - none*
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -31,7 +33,6 @@ archives:
 
 changelog:
   sort: asc
-  abbrev: -1
   filters:
     exclude:
       - "^docs:"
