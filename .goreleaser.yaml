@@ -31,6 +31,7 @@ archives:
 
 changelog:
   sort: asc
+  abbrev: -1
   filters:
     exclude:
       - "^docs:"
@@ -39,5 +40,3 @@ changelog:
       - "^chore:"
       - Merge pull request
       - Merge branch
-  use: git
-  format: markdown
