@@ -23,7 +23,7 @@ archives:
   - formats: ["tar.gz"]
     files:
       - none*
-    name_template: "{{ .ProjectName }}_{{ .Os | lower }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: "{{ tolower .ProjectName }}_{{ tolower .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
 
 changelog:
   sort: asc
