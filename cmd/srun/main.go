@@ -10,6 +10,7 @@ import (
 	"srun/internal/core"
 	"srun/internal/static"
 
+	"path"
 	"fmt"
 	"io/fs"
 	"strings"
@@ -36,6 +37,7 @@ func defaultDBPath() string {
 var dbPath string
 var port string
 var basePathFlag string
+var trustedProxiesFlag string
 
 func ListFilesHandler(c *gin.Context) {
 	// Create a string builder to collect the file listing
@@ -88,6 +90,7 @@ func main() {
 	flag.StringVar(&port, "port", "8000", "Port to listen on")
 	flag.StringVar(&dbPath, "db", defaultDBPath(), "SQLite database path")
 	flag.StringVar(&basePathFlag, "base-path", "/", "Base path for the application (e.g., / or /srun)")
+	flag.StringVar(&trustedProxiesFlag, "trusted-proxies", "", "Comma-separated list of trusted proxy IPs (e.g., '127.0.0.1,192.168.1.100')")
 	flag.Parse()
 
 	store, err := core.NewSQLiteStorage(dbPath)
@@ -107,6 +110,21 @@ func main() {
 
 	r := gin.Default()
 
+	// Set trusted proxies if the flag is provided
+	if trustedProxiesFlag != "" {
+		proxies := strings.Split(trustedProxiesFlag, ",")
+		cleanedProxies := make([]string, 0, len(proxies))
+		for _, p := range proxies {
+			trimmedP := strings.TrimSpace(p)
+			if trimmedP != "" {
+				cleanedProxies = append(cleanedProxies, trimmedP)
+			}
+		}
+		if len(cleanedProxies) > 0 {
+			r.SetTrustedProxies(cleanedProxies)
+		}
+	}
+
 	// Normalize base path
 	cleanBasePath := path.Clean("/" + basePathFlag)
 	if cleanBasePath != "/" && strings.HasSuffix(cleanBasePath, "/") {
@@ -125,7 +143,7 @@ func main() {
 	}
 
 	// API routes first
-	api.SetupRoutes(routerGroup.(*gin.RouterGroup), pm)
+	api.SetupRoutes(routerGroup, pm)
 
 	// Create a filesystem handler for the embedded files
 	distFS, err := fs.Sub(static.StaticFiles, "dist")
@@ -198,7 +216,14 @@ func main() {
 	})
 
 	// 4. Finally, catch-all for SPA routes
-	routerGroup.NoRoute(serveIndexHTML)
+	if _, ok := routerGroup.(*gin.RouterGroup); ok {
+		// If it's a group, define a catch-all for SPA routes within the group.
+		// This must be after specific file/asset routes for that group.
+		routerGroup.GET("/*any", serveIndexHTML)
+	} else {
+		// If routerGroup is the main engine (r), use NoRoute for SPA catch-all.
+		r.NoRoute(serveIndexHTML)
+	}
 
 	log.Printf("Starting server on port %s", port)
 	log.Printf("Using database at: %s", dbPath)

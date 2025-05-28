@@ -15,7 +15,7 @@ type CreateJobRequest struct {
 	Command string `json:"command" binding:"required"`
 }
 
-func SetupRoutes(r *gin.Engine, pm *core.ProcessManager) {
+func SetupRoutes(r gin.IRoutes, pm *core.ProcessManager) {
 	// Version endpoint
 	r.GET("/api/version", func(c *gin.Context) {
 		c.JSON(http.StatusOK, version.GetInfo())
