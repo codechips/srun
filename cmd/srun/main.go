@@ -2,17 +2,16 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
-	"srun/internal/api"
+	"path"
 	"path/filepath"
+	"srun/internal/api"
 	"srun/internal/core"
 	"srun/internal/static"
-
-	"path"
-	"fmt"
-	"io/fs"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -24,19 +23,21 @@ func defaultDBPath() string {
 		log.Printf("Warning: Couldn't get user config directory: %v", err)
 		return "srun.db"
 	}
-	
+
 	appDir := filepath.Join(configDir, "srun")
 	if err := os.MkdirAll(appDir, 0700); err != nil {
 		log.Printf("Warning: Couldn't create application directory: %v", err)
 		return "srun.db"
 	}
-	
+
 	return filepath.Join(appDir, "srun.db")
 }
 
-var dbPath string
-var port string
-var trustedProxiesFlag string
+var (
+	dbPath             string
+	port               string
+	trustedProxiesFlag string
+)
 
 func ListFilesHandler(c *gin.Context) {
 	// Create a string builder to collect the file listing
@@ -144,7 +145,7 @@ func main() {
 		if basePath == "" {
 			basePath = "/"
 		}
-		
+
 		// Normalize the base path
 		basePath = path.Clean("/" + basePath)
 		if basePath != "/" && strings.HasSuffix(basePath, "/") {
@@ -212,6 +213,5 @@ func main() {
 
 	log.Printf("Starting server on port %s", port)
 	log.Printf("Using database at: %s", dbPath)
-	log.Printf("Application base path: %s", cleanBasePath)
 	r.Run(":" + port)
 }
