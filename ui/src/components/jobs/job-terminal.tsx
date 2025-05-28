@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Terminal } from "@xterm/xterm";
+import { getWsUrl } from "@/config";
 import "@xterm/xterm/css/xterm.css";
 
 interface JobTerminalProps {
@@ -27,8 +28,7 @@ export function JobTerminal({ jobId }: JobTerminalProps) {
     });
     terminal.current.open(terminalRef.current);
 
-    // In development, connect through Vite's proxy
-    const wsUrl = `ws://${window.location.host}/api/jobs/${jobId}/logs`;
+    const wsUrl = getWsUrl(`/api/jobs/${jobId}/logs`);
     const ws = new WebSocket(wsUrl);
 
     ws.onmessage = (event) => {
