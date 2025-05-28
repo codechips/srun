@@ -2,7 +2,7 @@
 
 The name *srun* stands for **s**cript **run**ner (but is also an obscene curse word in Russian).
 
-[![Go Version](https://img.shields.io/badge/go-1.21%2B-blue)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.24%2B-blue)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Script and command execution system with web interface featuring:
@@ -29,7 +29,7 @@ chmod +x srun
 ```bash
 git clone https://github.com/codechips/srun.git
 cd srun
-./build.sh  # Requires Go 1.21+, Node 18+, pnpm
+./build.sh  # Requires Go 1.24+, Node 18+, pnpm
 ```
 
 ## Usage
@@ -37,17 +37,16 @@ cd srun
 # Start server (default port 8000)
 ./srun -port=8080
 
-# Environment alternative
-SRUN_PORT=8080 ./srun
 ```
 
 Access the web UI at `http://localhost:8080`
 
 ## CLI Flags
-| Flag          | Default                              | Description                                                                 |
-|---------------|--------------------------------------|-----------------------------------------------------------------------------|
-| `-port`       | `8000`                               | HTTP server port (also via `SRUN_PORT` environment variable)                |
-| `-db`         | Platform-specific config directory*  | SQLite database path (auto-created if missing)                              |
+| Flag                | Default                              | Description                                                                    |
+|---------------------|--------------------------------------|--------------------------------------------------------------------------------|
+| `-port`             | `8000`                               | HTTP server port (also via `SRUN_PORT` environment variable)                   |
+| `-db`               | Platform-specific config directory*  | SQLite database path (auto-created if missing)                                 |
+| `-trusted-proxies`  | `""` (none)                          | Comma-separated list of trusted proxy IPs (e.g., '127.0.0.1,192.168.1.100')   |
 
 *Default database locations:  
 - **Linux**: `$HOME/.config/srun/srun.db`  
@@ -98,6 +97,7 @@ yourdomain.com {
 *   **`uri strip_prefix`**: Ensures that `srun` receives requests at its root (e.g., `/api/jobs` instead of `/srun/api/jobs`).
 *   **`header_up X-Forwarded-Prefix`**: Informs `srun` of its public-facing base path. If your proxy uses a different header to convey this information (e.g., `X-Base-Path`), you'll need to adjust the Go backend code in `cmd/srun/main.go` to read that specific header.
 *   **WebSocket Proxying**: Caddy's `reverse_proxy` handles WebSocket upgrades automatically, which is necessary for real-time log streaming.
+
 
 With this setup, you can access `srun` at `http://yourdomain.com/srun/`.
 
