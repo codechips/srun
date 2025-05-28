@@ -15,7 +15,7 @@ const getGitCommitHash = () => {
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/', // Ensure assets are loaded from root path
+  base: './', // Use relative paths for assets
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

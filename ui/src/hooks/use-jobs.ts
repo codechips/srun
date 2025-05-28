@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getApiUrl } from "@/config";
 
 export interface Job {
   id: string;
@@ -14,7 +15,7 @@ export function useJobs() {
   return useQuery<Job[]>({
     queryKey: ["jobs"],
     queryFn: async () => {
-      const response = await fetch("/api/jobs");
+      const response = await fetch(getApiUrl("/api/jobs"));
       if (!response.ok) throw new Error("Failed to fetch jobs");
       return response.json();
     },
@@ -27,7 +28,7 @@ export function useCreateJob() {
 
   return useMutation({
     mutationFn: async (command: string) => {
-      const response = await fetch("/api/jobs", {
+      const response = await fetch(getApiUrl("/api/jobs"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,7 +49,7 @@ export function useJobActions() {
 
   const stopJob = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/jobs/${id}/stop`, { method: "POST" });
+      const response = await fetch(getApiUrl(`/api/jobs/${id}/stop`), { method: "POST" });
       if (!response.ok) throw new Error("Failed to stop job");
     },
     onSuccess: () => {
@@ -62,7 +63,7 @@ export function useJobActions() {
 
   const restartJob = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/jobs/${id}/restart`, {
+      const response = await fetch(getApiUrl(`/api/jobs/${id}/restart`), {
         method: "POST",
       });
       if (!response.ok) throw new Error("Failed to restart job");
@@ -80,7 +81,7 @@ export function useJobActions() {
 
   const removeJob = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/jobs/${id}`, { method: "DELETE" });
+      const response = await fetch(getApiUrl(`/api/jobs/${id}`), { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to remove job");
     },
     onSuccess: () => {

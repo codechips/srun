@@ -35,6 +35,7 @@ func defaultDBPath() string {
 
 var dbPath string
 var port string
+var basePathFlag string
 
 func ListFilesHandler(c *gin.Context) {
 	// Create a string builder to collect the file listing
@@ -86,6 +87,7 @@ func main() {
 	// Configure flags
 	flag.StringVar(&port, "port", "8000", "Port to listen on")
 	flag.StringVar(&dbPath, "db", defaultDBPath(), "SQLite database path")
+	flag.StringVar(&basePathFlag, "base-path", "/", "Base path for the application (e.g., / or /srun)")
 	flag.Parse()
 
 	store, err := core.NewSQLiteStorage(dbPath)
@@ -105,8 +107,25 @@ func main() {
 
 	r := gin.Default()
 
+	// Normalize base path
+	cleanBasePath := path.Clean("/" + basePathFlag)
+	if cleanBasePath != "/" && strings.HasSuffix(cleanBasePath, "/") {
+		cleanBasePath = cleanBasePath[:len(cleanBasePath)-1]
+	}
+	if cleanBasePath == "" {
+		cleanBasePath = "/"
+	}
+
+	// Determine the router group
+	var routerGroup gin.IRouter
+	if cleanBasePath == "/" {
+		routerGroup = r
+	} else {
+		routerGroup = r.Group(cleanBasePath)
+	}
+
 	// API routes first
-	api.SetupRoutes(r, pm)
+	api.SetupRoutes(routerGroup.(*gin.RouterGroup), pm)
 
 	// Create a filesystem handler for the embedded files
 	distFS, err := fs.Sub(static.StaticFiles, "dist")
@@ -114,19 +133,38 @@ func main() {
 		panic(err)
 	}
 
-	// Static file handlers in specific order
-	// 1. Root path
-	r.GET("/", func(c *gin.Context) {
-		data, err := fs.ReadFile(distFS, "index.html")
+	serveIndexHTML := func(c *gin.Context) {
+		indexHTMLBytes, err := fs.ReadFile(distFS, "index.html")
 		if err != nil {
-			c.String(http.StatusInternalServerError, "Could not load index.html")
+			c.String(http.StatusInternalServerError, "Could not load index.html: "+err.Error())
 			return
 		}
-		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
-	})
+
+		// Inject base tag and JavaScript variable
+		htmlContent := string(indexHTMLBytes)
+		baseHref := cleanBasePath
+		if !strings.HasSuffix(baseHref, "/") {
+			baseHref += "/"
+		}
+
+		// Inject <base href="...">
+		if cleanBasePath != "/" {
+			htmlContent = strings.Replace(htmlContent, "<head>", fmt.Sprintf("<head>\n    <base href=\"%s\">", baseHref), 1)
+		}
+
+		// Inject JavaScript global for base path
+		scriptToInject := fmt.Sprintf("<script>window.APP_BASE_PATH = \"%s\";</script>", cleanBasePath)
+		htmlContent = strings.Replace(htmlContent, "<head>", "<head>\n    "+scriptToInject, 1)
+
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
+	}
+
+	// Static file handlers in specific order
+	// 1. Root path
+	routerGroup.GET("/", serveIndexHTML)
 
 	// 2. Assets directory
-	r.GET("/assets/*filepath", func(c *gin.Context) {
+	routerGroup.GET("/assets/*filepath", func(c *gin.Context) {
 		filepath := c.Param("filepath")
 		filepath = strings.TrimPrefix(filepath, "/")
 		path := "assets/" + filepath
@@ -150,7 +188,7 @@ func main() {
 	})
 
 	// 3. Specific static files (like nazar.svg)
-	r.GET("/nazar.svg", func(c *gin.Context) {
+	routerGroup.GET("/nazar.svg", func(c *gin.Context) {
 		data, err := fs.ReadFile(distFS, "nazar.svg")
 		if err != nil {
 			c.String(http.StatusNotFound, "File not found")
@@ -160,16 +198,10 @@ func main() {
 	})
 
 	// 4. Finally, catch-all for SPA routes
-	r.NoRoute(func(c *gin.Context) {
-		data, err := fs.ReadFile(distFS, "index.html")
-		if err != nil {
-			c.String(http.StatusInternalServerError, "Could not load index.html")
-			return
-		}
-		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
-	})
+	routerGroup.NoRoute(serveIndexHTML)
 
 	log.Printf("Starting server on port %s", port)
 	log.Printf("Using database at: %s", dbPath)
+	log.Printf("Application base path: %s", cleanBasePath)
 	r.Run(":" + port)
 }
