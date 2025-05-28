@@ -15,6 +15,8 @@ VERSION=$(git describe --tags --always --dirty)
 COMMIT=$(git rev-parse --short HEAD)
 BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S')
 
+echo "version: $VERSION, commit: $COMMIT, build date: $BUILD_DATE"
+
 go build -o srun \
   -ldflags "-X srun/internal/version.Version=$VERSION \
             -X srun/internal/version.GitCommit=$COMMIT \
